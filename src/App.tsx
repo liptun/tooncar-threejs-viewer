@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom'
-import { ChevronRight, CircleHelp, Gauge, Map, Maximize, MousePointer2, Sparkles } from 'lucide-react'
+import { ChevronRight, CircleHelp, Map, Maximize, MousePointer2, Sparkles } from 'lucide-react'
 import { TrackViewer } from './TrackViewer'
+import { Jukebox } from './Jukebox'
 import { tracks } from './tracks'
 
 function TrackPage() {
@@ -31,44 +32,38 @@ function TrackPage() {
   if (!requestedTrack) return <Navigate to={`/track/${tracks[0].id}`} replace />
 
   return (
-    <main className="flex h-dvh w-full overflow-hidden bg-[#080a0d] text-white">
-      <aside className="z-10 flex w-[300px] shrink-0 flex-col border-r border-white/8 bg-[#0c0f13]/95 shadow-2xl max-md:w-[108px]">
-        <header className="border-b border-white/8 px-6 py-7 max-md:px-4">
-          <div className="flex items-center gap-3">
-            <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#ff5c35] text-white shadow-[0_0_24px_rgba(255,92,53,.25)]">
-              <Gauge size={22} strokeWidth={2.4} />
-            </div>
-            <div className="max-md:hidden">
-              <p className="text-[10px] font-bold uppercase tracking-[.26em] text-[#ff8669]">ToonCar</p>
-              <h1 className="mt-0.5 text-lg font-extrabold tracking-tight">Track Viewer</h1>
-            </div>
+    <main className="flex h-dvh w-full overflow-hidden bg-[#080b18] text-white">
+      <aside className="z-10 flex w-[300px] shrink-0 flex-col border-r border-[#7892e4]/15 bg-[#10162d]/95 shadow-2xl max-md:w-[108px]">
+        <header className="flex items-center border-b border-[#7892e4]/15 bg-gradient-to-br from-[#202c59]/55 to-transparent px-5 py-3 max-md:justify-center max-md:px-2">
+          <img src="/tooncar-logo.png" alt="ToonCar" className="h-20 w-24 shrink-0 object-contain drop-shadow-[0_0_18px_rgba(243,173,0,.22)] max-md:size-20" />
+          <div className="ml-2 max-md:hidden">
+            <p className="text-[9px] font-bold uppercase tracking-[.24em] text-[#ffd455]">Oryginalne trasy</p>
+            <h1 className="mt-0.5 text-base font-extrabold tracking-tight">Przeglądarka tras</h1>
           </div>
         </header>
 
-        <section className="flex-1 overflow-y-auto px-3 py-6">
-          <div className="mb-3 flex items-center justify-between px-3 max-md:justify-center">
+        <section className="flex-1 overflow-y-auto py-6">
+          <div className="mb-3 px-3 text-center md:text-left">
             <span className="text-[10px] font-bold uppercase tracking-[.2em] text-white/35 max-md:hidden">Wybierz trasę</span>
-            <span className="rounded-full bg-white/6 px-2 py-0.5 text-[10px] font-semibold text-white/40">{tracks.length}</span>
           </div>
-          <div className="space-y-2">
-            {tracks.map((item, index) => {
+          <div className="space-y-1">
+            {tracks.map((item) => {
               const active = item.id === selectedId
               return (
                 <button
                   key={item.id}
                   onClick={() => selectTrack(item.id)}
                   disabled={!item.available}
-                  className={`group relative flex w-full items-center gap-3 overflow-hidden rounded-xl border px-3 py-3 text-left transition-all ${active ? 'border-[#ff5c35]/35 bg-[#ff5c35]/10' : 'border-transparent hover:border-white/8 hover:bg-white/4'}`}
+                  className={`group relative flex min-h-20 w-full cursor-pointer items-stretch gap-2 overflow-hidden border-l-4 px-0 py-0 text-left transition-all disabled:cursor-not-allowed disabled:opacity-40 ${active ? 'border-l-[#f3ad00] bg-gradient-to-r from-[#f3ad00]/18 to-[#7892e4]/8' : 'border-l-transparent hover:bg-[#7892e4]/8'}`}
                 >
-                  {active && <span className="absolute inset-y-3 left-0 w-0.5 rounded-r bg-[#ff5c35]" />}
-                  <span className={`grid size-11 shrink-0 place-items-center rounded-lg font-mono text-sm font-bold ${active ? 'bg-[#ff5c35] text-white' : 'bg-white/6 text-white/40'}`}>
-                    {String(index + 1).padStart(2, '0')}
+                  <span className="relative w-24 shrink-0 overflow-hidden max-md:w-16">
+                    <img src={item.thumbnailUrl} alt="" className="size-full object-cover transition duration-300 group-hover:scale-105" />
                   </span>
-                  <span className="min-w-0 flex-1 max-md:hidden">
+                  <span className="min-w-0 flex-1 self-center max-md:hidden">
                     <span className={`block truncate text-sm font-bold ${active ? 'text-white' : 'text-white/65'}`}>{item.name}</span>
                     <span className="mt-0.5 block truncate text-[10px] uppercase tracking-wider text-white/30">{item.world}</span>
                   </span>
-                  <ChevronRight size={15} className={`max-md:hidden ${active ? 'text-[#ff8669]' : 'text-white/15'}`} />
+                  <ChevronRight size={15} className={`mr-3 self-center max-md:hidden ${active ? 'text-[#ffd455]' : 'text-white/15'}`} />
                 </button>
               )
             })}
@@ -76,7 +71,8 @@ function TrackPage() {
         </section>
 
         <footer className="border-t border-white/8 p-5 max-md:p-3">
-          <div className="flex items-center gap-2 text-[11px] text-white/30 max-md:justify-center">
+          <Jukebox musicUrl={track.musicUrl} />
+          <div className="mt-4 flex items-center gap-2 text-[11px] text-white/30 max-md:mt-0 max-md:justify-center">
             <CircleHelp size={14} />
             <span className="max-md:hidden">Przytrzymaj LPM, aby sterować kamerą</span>
           </div>
@@ -88,7 +84,7 @@ function TrackPage() {
         <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between bg-gradient-to-b from-black/55 to-transparent p-7 max-sm:p-4">
           <div>
             <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.24em] text-white/45">
-              <Map size={13} className="text-[#ff6a47]" /> Trasa aktywna
+              <Map size={13} className="text-[#f3ad00]" /> Trasa aktywna
             </div>
             <h2 className="mt-2 text-3xl font-black tracking-[-.04em] drop-shadow-lg max-sm:text-2xl">{track.name}</h2>
             <p className="mt-1 text-xs font-medium uppercase tracking-[.16em] text-white/40">{track.world}</p>
@@ -101,12 +97,12 @@ function TrackPage() {
         {!ready && !error && (
           <div className="absolute inset-0 grid place-items-center bg-[#0c1015]">
             <div className="w-64 text-center">
-              <div className="mx-auto mb-5 grid size-12 place-items-center rounded-2xl border border-[#ff5c35]/30 bg-[#ff5c35]/10 text-[#ff6a47]">
+              <div className="mx-auto mb-5 grid size-12 place-items-center rounded-2xl border border-[#f3ad00]/35 bg-[#f3ad00]/10 text-[#ffd455]">
                 <Sparkles className="animate-pulse" size={22} />
               </div>
               <p className="text-xs font-bold uppercase tracking-[.2em] text-white/55">Wczytywanie trasy</p>
               <div className="mt-4 h-1 overflow-hidden rounded-full bg-white/8">
-                <div className="h-full rounded-full bg-[#ff5c35] transition-[width] duration-300" style={{ width: `${Math.max(progress, 4)}%` }} />
+                <div className="h-full rounded-full bg-[#f3ad00] transition-[width] duration-300" style={{ width: `${Math.max(progress, 4)}%` }} />
               </div>
               <p className="mt-2 font-mono text-[10px] text-white/25">{progress || '…'}%</p>
             </div>

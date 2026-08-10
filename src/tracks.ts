@@ -3,6 +3,8 @@ export type Track = {
   name: string
   world: string
   modelUrl: string
+  thumbnailUrl: string
+  musicUrl: string
   skyboxUrl?: string
   runtimeUrl?: string
   cameraStart?: {
@@ -19,8 +21,10 @@ export const tracks: Track[] = [
   {
     id: 'luna',
     name: 'Luna',
-    world: 'Moon Circuit',
+    world: 'Trasa księżycowa',
     modelUrl: '/tracks/luna/Luna.glb',
+    thumbnailUrl: '/tracks/luna/thumbnail.jpg',
+    musicUrl: '/music/Track00.mp3',
     runtimeUrl: '/tracks/luna/runtime.json',
     cameraStart: {
       position: [-22.5001, -10.7354, 28.5046],
@@ -33,12 +37,14 @@ export const tracks: Track[] = [
   {
     id: 'venus',
     name: 'Venus',
-    world: 'Venus Circuit',
+    world: 'Trasa na Wenus',
     modelUrl: '/tracks/venus/Venus.glb',
+    thumbnailUrl: '/tracks/venus/thumbnail.jpg',
+    musicUrl: '/music/Track05.mp3',
     runtimeUrl: '/tracks/venus/runtime.json',
     cameraStart: {
-      position: [1.96, -3.5759, -23.1694],
-      rotation: [-0.147837, 2.435398, 0],
+      position: [15.421, -9.5223, -12.0369],
+      rotation: [0.140163, 8.315398, 0],
       fov: 75,
     },
     accent: '#c56cff',
@@ -47,8 +53,10 @@ export const tracks: Track[] = [
   {
     id: 'alaska',
     name: 'Alaska',
-    world: 'Frozen Circuit',
+    world: 'Lodowa trasa',
     modelUrl: '/tracks/alaska/Alaska.glb',
+    thumbnailUrl: '/tracks/alaska/thumbnail.jpg',
+    musicUrl: '/music/Track00.mp3',
     runtimeUrl: '/tracks/alaska/runtime.json',
     cameraStart: {
       position: [29.2191, 0.937, 37.5901],
@@ -61,8 +69,10 @@ export const tracks: Track[] = [
   {
     id: 'amazonia',
     name: 'Amazonia',
-    world: 'Jungle Circuit',
+    world: 'Trasa w dżungli',
     modelUrl: '/tracks/amazonia/Amazonia.glb',
+    thumbnailUrl: '/tracks/amazonia/thumbnail.jpg',
+    musicUrl: '/music/Track01.mp3',
     runtimeUrl: '/tracks/amazonia/runtime.json',
     cameraStart: {
       position: [36.2031, 0.2488, 24.1522],
@@ -75,8 +85,10 @@ export const tracks: Track[] = [
   {
     id: 'atolon',
     name: 'Atolon',
-    world: 'Island Circuit',
+    world: 'Trasa wyspowa',
     modelUrl: '/tracks/atolon/Atolon.glb',
+    thumbnailUrl: '/tracks/atolon/thumbnail.jpg',
+    musicUrl: '/music/Track02.mp3',
     runtimeUrl: '/tracks/atolon/runtime.json',
     cameraStart: {
       position: [-9.6862, -0.8751, 8.6363],
@@ -89,8 +101,10 @@ export const tracks: Track[] = [
   {
     id: 'castilla',
     name: 'Castilla',
-    world: 'Castle Circuit',
+    world: 'Trasa zamkowa',
     modelUrl: '/tracks/castilla/Castilla.glb',
+    thumbnailUrl: '/tracks/castilla/thumbnail.jpg',
+    musicUrl: '/music/Track03.mp3',
     runtimeUrl: '/tracks/castilla/runtime.json',
     cameraStart: {
       position: [-43.5395, -3.8008, 15.0055],
@@ -103,8 +117,10 @@ export const tracks: Track[] = [
   {
     id: 'japon',
     name: 'Japon',
-    world: 'Sakura Circuit',
+    world: 'Trasa kwitnącej wiśni',
     modelUrl: '/tracks/japon/Japon.glb',
+    thumbnailUrl: '/tracks/japon/thumbnail.jpg',
+    musicUrl: '/music/Track05.mp3',
     runtimeUrl: '/tracks/japon/runtime.json',
     cameraStart: {
       position: [-5.8153, -3.3664, 37.3004],
@@ -117,8 +133,10 @@ export const tracks: Track[] = [
   {
     id: 'sahara',
     name: 'Sahara',
-    world: 'Desert Circuit',
+    world: 'Trasa pustynna',
     modelUrl: '/tracks/sahara/Sahara.glb',
+    thumbnailUrl: '/tracks/sahara/thumbnail.jpg',
+    musicUrl: '/music/Track01.mp3',
     runtimeUrl: '/tracks/sahara/runtime.json',
     cameraStart: {
       position: [-4.3697, -2.0048, -16.5463],
@@ -131,8 +149,10 @@ export const tracks: Track[] = [
   {
     id: 'vegas',
     name: 'Vegas',
-    world: 'Neon Circuit',
+    world: 'Trasa neonowa',
     modelUrl: '/tracks/vegas/Vegas.glb',
+    thumbnailUrl: '/tracks/vegas/thumbnail.jpg',
+    musicUrl: '/music/Track03.mp3',
     runtimeUrl: '/tracks/vegas/runtime.json',
     cameraStart: {
       position: [11.3943, -11.6969, 5.7675],

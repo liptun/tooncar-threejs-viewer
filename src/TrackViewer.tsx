@@ -571,11 +571,11 @@ export function TrackViewer({ track, onProgress, onReady, onError }: Props) {
   return (
     <>
       <div ref={mountRef} className="absolute inset-0" aria-label={`Widok 3D trasy ${track.name}`} />
-      <div className="pointer-events-auto absolute bottom-20 left-7 z-20 w-56 rounded-xl border border-white/10 bg-black/45 px-4 py-3 backdrop-blur-md max-sm:bottom-16 max-sm:left-4">
+      <div className="pointer-events-auto absolute bottom-20 left-7 z-20 w-56 rounded-xl border border-[#7892e4]/20 bg-[#10162d]/80 px-4 py-3 shadow-[0_12px_40px_rgba(0,0,0,.28)] backdrop-blur-md max-sm:bottom-16 max-sm:left-4">
         <div className="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-[.14em] text-white/55">
           <span className="flex items-center gap-1.5"><Gauge size={11} /> Prędkość lotu</span>
           <span className="flex items-center gap-2">
-            <span className="font-mono text-[#ff8669]">{moveSpeed}</span>
+            <span className="font-mono text-[#ffd455]">{moveSpeed}</span>
             <button type="button" onClick={() => updateMoveSpeed(60)} className="rounded border border-white/10 p-1 text-white/35 hover:bg-white/10 hover:text-white" aria-label="Resetuj prędkość" title="Resetuj"><RotateCcw size={9} /></button>
           </span>
         </div>
@@ -586,14 +586,14 @@ export function TrackViewer({ track, onProgress, onReady, onError }: Props) {
           step="5"
           value={moveSpeed}
           onChange={(event) => updateMoveSpeed(Number(event.target.value))}
-          className="h-1.5 w-full cursor-pointer accent-[#ff5c35]"
+          className="h-1.5 w-full cursor-pointer accent-[#f3ad00]"
           aria-label="Prędkość poruszania się"
         />
         <div className="my-3 h-px bg-white/8" />
         <div className="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-[.14em] text-white/55">
           <span className="flex items-center gap-1.5"><Focus size={11} /> Pole widzenia</span>
           <span className="flex items-center gap-2">
-            <span className="font-mono text-[#ff8669]">{cameraFov}°</span>
+            <span className="font-mono text-[#ffd455]">{cameraFov}°</span>
             <button type="button" onClick={() => updateCameraFov(75)} className="rounded border border-white/10 p-1 text-white/35 hover:bg-white/10 hover:text-white" aria-label="Resetuj pole widzenia" title="Resetuj"><RotateCcw size={9} /></button>
           </span>
         </div>
@@ -604,14 +604,14 @@ export function TrackViewer({ track, onProgress, onReady, onError }: Props) {
           step="1"
           value={cameraFov}
           onChange={(event) => updateCameraFov(Number(event.target.value))}
-          className="h-1.5 w-full cursor-pointer accent-[#ff5c35]"
+          className="h-1.5 w-full cursor-pointer accent-[#f3ad00]"
           aria-label="Pole widzenia kamery"
         />
         <div className="my-3 h-px bg-white/8" />
         <div className="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-[.14em] text-white/55">
           <span className="flex items-center gap-1.5"><MousePointer2 size={11} /> Czułość myszy</span>
           <span className="flex items-center gap-2">
-            <span className="font-mono text-[#ff8669]">{(mouseSensitivity / 6).toFixed(1)}×</span>
+            <span className="font-mono text-[#ffd455]">{(mouseSensitivity / 6).toFixed(1)}×</span>
             <button type="button" onClick={() => updateMouseSensitivity(6)} className="rounded border border-white/10 p-1 text-white/35 hover:bg-white/10 hover:text-white" aria-label="Resetuj czułość myszy" title="Resetuj"><RotateCcw size={9} /></button>
           </span>
         </div>
@@ -622,13 +622,13 @@ export function TrackViewer({ track, onProgress, onReady, onError }: Props) {
           step="1"
           value={mouseSensitivity}
           onChange={(event) => updateMouseSensitivity(Number(event.target.value))}
-          className="h-1.5 w-full cursor-pointer accent-[#ff5c35]"
+          className="h-1.5 w-full cursor-pointer accent-[#f3ad00]"
           aria-label="Czułość sterowania myszą"
         />
         <button
           type="button"
           onClick={() => void createCameraSnapshot()}
-          className="mt-3 inline-flex w-fit items-center rounded border border-[#ff5c35]/30 bg-[#ff5c35]/10 px-1.5 py-1 text-[8px] font-bold leading-none text-[#ff9a81] transition hover:bg-[#ff5c35]/20 hover:text-white"
+          className="mt-3 inline-flex w-fit items-center rounded border border-[#f3ad00]/35 bg-[#f3ad00]/10 px-1.5 py-1 text-[8px] font-bold leading-none text-[#ffd455] transition hover:bg-[#f3ad00]/20 hover:text-white"
         >
           <ClipboardCopy size={10} className="mr-1" />
           {snapshotCopied ? 'Skopiowano' : 'Kopiuj widok'}

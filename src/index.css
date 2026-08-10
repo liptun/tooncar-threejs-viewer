@@ -6,7 +6,7 @@
 
 * { box-sizing: border-box; }
 html, body, #root { width: 100%; height: 100%; margin: 0; }
-body { background: #080a0d; font-family: var(--font-sans); }
+body { background: #080b18; font-family: var(--font-sans); }
 button { font: inherit; }
 canvas { display: block; width: 100%; height: 100%; outline: none; }
 

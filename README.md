@@ -1,4 +1,4 @@
-# ToonCar Track Viewer
+# ToonCar — przeglądarka tras
 
 Boilerplate aplikacji React + Vite + Tailwind + Three.js do prezentacji animowanych tras z gry ToonCar.
 
