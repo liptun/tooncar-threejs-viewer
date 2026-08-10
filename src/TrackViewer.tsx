@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Camera, Gauge } from 'lucide-react'
+import { Camera, Gauge, Maximize, RotateCcw } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
@@ -265,6 +265,23 @@ export function TrackViewer({ track, onProgress, onReady, onError, onSkyboxReady
     } catch {
       setSnapshotCopied(false)
     }
+  }
+
+  const resetCamera = () => {
+    const camera = cameraRef.current
+    const initialView = track.cameraStart
+    if (!camera || !initialView) return
+    camera.position.fromArray(initialView.position)
+    camera.rotation.set(initialView.rotation[0], initialView.rotation[1], initialView.rotation[2], 'YXZ')
+    cameraFovRef.current = initialView.fov
+    camera.fov = initialView.fov
+    camera.updateProjectionMatrix()
+
+    const params = new URLSearchParams(window.location.search)
+    params.delete('p')
+    params.delete('r')
+    params.delete('fov')
+    setSearchParams(params, { replace: true })
   }
 
   useEffect(() => {
@@ -589,18 +606,20 @@ export function TrackViewer({ track, onProgress, onReady, onError, onSkyboxReady
   return (
     <>
       <div ref={mountRef} className="absolute inset-0" aria-label={`Widok 3D trasy ${track.name}`} />
-      <button
-        type="button"
-        onClick={() => void createCameraSnapshot()}
-        className={`group pointer-events-auto absolute right-20 top-7 z-20 flex h-10 w-10 cursor-pointer items-center justify-center overflow-hidden rounded-xl border px-2.5 whitespace-nowrap backdrop-blur-sm transition-[width,color,background-color,border-color] duration-300 hover:w-36 max-sm:right-16 max-sm:top-4 ${snapshotCopied ? 'border-[#f3ad00]/60 bg-[#f3ad00]/20 text-[#ffd455]' : 'border-white/10 bg-black/25 text-white/60 hover:bg-white/10 hover:text-white'}`}
-        aria-label="Skopiuj link do widoku kamery"
-        title={snapshotCopied ? 'Skopiowano link' : 'Skopiuj link do widoku'}
-      >
-        <Camera size={17} className="shrink-0" />
-        <span className="ml-0 max-w-0 overflow-hidden text-[10px] font-bold uppercase tracking-[.08em] opacity-0 transition-[max-width,margin,opacity] duration-300 group-hover:ml-2 group-hover:max-w-24 group-hover:opacity-100">
-          {snapshotCopied ? 'Skopiowano' : 'Skopiuj widok'}
-        </span>
-      </button>
+      <div className="pointer-events-auto absolute right-7 top-7 z-20 flex items-center justify-end gap-2 max-sm:right-4 max-sm:top-4">
+        <button type="button" onClick={resetCamera} className="group flex h-10 w-10 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-black/30 px-2.5 whitespace-nowrap text-white/75 backdrop-blur-sm transition-[width,color,background-color] duration-300 hover:w-40 hover:bg-[#10162d]/90 hover:text-white" aria-label="Resetuj kamerę" title="Resetuj kamerę">
+          <RotateCcw size={17} className="shrink-0" />
+          <span className="ml-0 max-w-0 overflow-hidden text-[10px] font-bold uppercase tracking-[.08em] opacity-0 [text-shadow:0_1px_3px_rgba(0,0,0,.95)] transition-[max-width,margin,opacity] duration-300 group-hover:ml-2 group-hover:max-w-28 group-hover:opacity-100">Resetuj kamerę</span>
+        </button>
+        <button type="button" onClick={() => void createCameraSnapshot()} className={`group flex h-10 w-10 cursor-pointer items-center justify-center overflow-hidden rounded-xl border px-2.5 whitespace-nowrap backdrop-blur-sm transition-[width,color,background-color,border-color] duration-300 hover:w-36 ${snapshotCopied ? 'border-[#f3ad00]/60 bg-[#f3ad00]/25 text-[#ffd455]' : 'border-white/10 bg-black/30 text-white/75 hover:bg-[#10162d]/90 hover:text-white'}`} aria-label="Skopiuj link do widoku kamery" title={snapshotCopied ? 'Skopiowano link' : 'Skopiuj link do widoku'}>
+          <Camera size={17} className="shrink-0" />
+          <span className="ml-0 max-w-0 overflow-hidden text-[10px] font-bold uppercase tracking-[.08em] opacity-0 [text-shadow:0_1px_3px_rgba(0,0,0,.95)] transition-[max-width,margin,opacity] duration-300 group-hover:ml-2 group-hover:max-w-24 group-hover:opacity-100">{snapshotCopied ? 'Skopiowano' : 'Skopiuj widok'}</span>
+        </button>
+        <button type="button" onClick={() => document.documentElement.requestFullscreen?.()} className="group flex h-10 w-10 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-black/30 px-2.5 whitespace-nowrap text-white/75 backdrop-blur-sm transition-[width,color,background-color] duration-300 hover:w-36 hover:bg-[#10162d]/90 hover:text-white" aria-label="Tryb pełnoekranowy" title="Pełny ekran">
+          <Maximize size={17} className="shrink-0" />
+          <span className="ml-0 max-w-0 overflow-hidden text-[10px] font-bold uppercase tracking-[.08em] opacity-0 [text-shadow:0_1px_3px_rgba(0,0,0,.95)] transition-[max-width,margin,opacity] duration-300 group-hover:ml-2 group-hover:max-w-24 group-hover:opacity-100">Pełny ekran</span>
+        </button>
+      </div>
       <div className={`pointer-events-none absolute bottom-3 left-3 z-20 w-44 bg-[#10162d]/45 px-3 py-2 shadow-[0_8px_24px_rgba(0,0,0,.12)] backdrop-blur-sm transition-opacity duration-300 ${showSpeedIndicator ? 'opacity-100' : 'opacity-0'}`} aria-hidden={!showSpeedIndicator}>
         <div className="mb-1.5 flex items-center justify-between text-[9px] font-bold uppercase tracking-[.1em] text-white/55">
           <span className="flex items-center gap-1"><Gauge size={10} /> Prędkość lotu</span>

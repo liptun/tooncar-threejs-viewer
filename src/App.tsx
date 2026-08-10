@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom'
-import { Maximize, Sparkles } from 'lucide-react'
+import { ChevronRight, Sparkles } from 'lucide-react'
 import { TrackViewer } from './TrackViewer'
 import { Jukebox } from './Jukebox'
 import { tracks } from './tracks'
@@ -89,12 +89,13 @@ function TrackPage() {
           />
           <button
             type="button"
-            className="fixed left-0 top-1/2 z-50 flex h-36 w-8 -translate-y-1/2 cursor-pointer flex-col items-center justify-center gap-2 rounded-r-lg border-y border-r border-[#7892e4]/30 bg-[#10162d]/75 text-[#ffd455]/85 shadow-[4px_0_24px_rgba(0,0,0,.3)] backdrop-blur-sm transition hover:bg-[#202c59]/85 hover:text-[#ffd455]"
+            className="fixed left-0 top-1/2 z-50 flex h-36 w-10 -translate-y-1/2 cursor-pointer flex-col items-center justify-center gap-2 rounded-r-xl border-y border-r border-white/10 bg-[#10162d]/90 text-white/70 shadow-lg backdrop-blur-sm transition-colors hover:text-white"
             onClick={() => setSidebarCollapsed(false)}
             aria-label="Pokaż listę tras"
           >
-            <span className="text-base leading-none">›</span>
-            <span className="text-[9px] font-bold uppercase tracking-[.14em] [writing-mode:vertical-rl]">Wybierz trasę</span>
+            <ChevronRight size={14} className="shrink-0" aria-hidden="true" />
+            <span className="text-[9px] font-bold uppercase tracking-[.14em] [text-shadow:0_1px_3px_rgba(0,0,0,0.95)] [writing-mode:vertical-rl]">Wybierz trasę</span>
+            <ChevronRight size={14} className="shrink-0" aria-hidden="true" />
           </button>
         </>
       )}
@@ -102,13 +103,6 @@ function TrackPage() {
       <section className="relative min-w-0 flex-1 overflow-hidden bg-[#10151c]">
         <TrackViewer track={track} onProgress={handleProgress} onReady={handleReady} onError={handleError} onSkyboxReady={handleSkyboxReady} />
         <Jukebox musicUrl={track.musicUrl} />
-        <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-end p-7 max-sm:p-4">
-          <button onClick={() => document.documentElement.requestFullscreen?.()} className="group pointer-events-auto flex h-10 w-10 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-black/25 px-2.5 whitespace-nowrap text-white/60 backdrop-blur-md transition-[width,color,background-color] duration-300 hover:w-36 hover:bg-white/10 hover:text-white" aria-label="Tryb pełnoekranowy">
-            <Maximize size={17} className="shrink-0" />
-            <span className="ml-0 max-w-0 overflow-hidden text-[10px] font-bold uppercase tracking-[.08em] opacity-0 transition-[max-width,margin,opacity] duration-300 group-hover:ml-2 group-hover:max-w-24 group-hover:opacity-100">Pełny ekran</span>
-          </button>
-        </div>
-
         {!ready && !error && (
           <div className={`absolute inset-0 grid place-items-center transition-colors duration-300 ${skyboxReady ? 'bg-transparent' : 'bg-[#0c1015]'}`}>
             <div className="w-64 text-center">
