@@ -1,0 +1,15 @@
+{
+  "schema": "tooncar-threejs-runtime-v1",
+  "source": {
+    "filename": "Venus.r3d",
+    "size": 11131264,
+    "sha256": "3445c8fafafdf9a795b8244592e705407d0f07eff861f36e1c29c1882ff67a7b"
+  },
+  "textureAnimations": "texture_animations.json",
+  "skybox": "skybox/skybox.json",
+  "expectedModel": "Venus.glb",
+  "notes": {
+    "transformAnimations": "Play GLTF animation clips with THREE.AnimationMixer and LoopRepeat.",
+    "textureAnimations": "Use atlas JSON tickFrames at 55 Hz."
+  }
+}

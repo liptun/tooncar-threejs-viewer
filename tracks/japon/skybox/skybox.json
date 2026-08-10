@@ -1,0 +1,53 @@
+{
+  "schema": "tooncar-skybox-v1",
+  "type": "cubemap-6-faces",
+  "faces": {
+    "UP": {
+      "file": "UP.png",
+      "sourceName": "morning_UP.bmp",
+      "sourcePng": "001_morning_UP.png"
+    },
+    "DN": {
+      "file": "DN.png",
+      "sourceName": "morning_DN.bmp",
+      "sourcePng": "000_morning_DN.png"
+    },
+    "FR": {
+      "file": "FR.png",
+      "sourceName": "morning_FR.bmp",
+      "sourcePng": "004_morning_FR.png"
+    },
+    "BK": {
+      "file": "BK.png",
+      "sourceName": "morning_BK.bmp",
+      "sourcePng": "002_morning_BK.png"
+    },
+    "LF": {
+      "file": "LF.png",
+      "sourceName": "morning_LF.bmp",
+      "sourcePng": "005_morning_LF.png"
+    },
+    "RT": {
+      "file": "RT.png",
+      "sourceName": "morning_RT.bmp",
+      "sourcePng": "003_morning_RT.png"
+    }
+  },
+  "tooncarMeshFaceOrder": [
+    "RT",
+    "LF",
+    "FR",
+    "BK",
+    "UP",
+    "DN"
+  ],
+  "sideUvFlip": {
+    "RT": true,
+    "LF": true,
+    "FR": true,
+    "BK": true,
+    "UP": false,
+    "DN": false
+  },
+  "note": "These are the original ToonCar skybox faces. The current Blender skybox uses flipped U+V on the four side faces."
+}

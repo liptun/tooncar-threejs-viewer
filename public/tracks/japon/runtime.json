@@ -1,0 +1,15 @@
+{
+  "schema": "tooncar-threejs-runtime-v1",
+  "source": {
+    "filename": "Japon.r3d",
+    "size": 13117542,
+    "sha256": "cb26790fc5059bf967818a40856520412ca1b4f9aea62045e5f7291fd87e65c8"
+  },
+  "textureAnimations": "texture_animations.json",
+  "skybox": "skybox/skybox.json",
+  "expectedModel": "Japon.glb",
+  "notes": {
+    "transformAnimations": "Play GLTF animation clips with THREE.AnimationMixer and LoopRepeat.",
+    "textureAnimations": "Use atlas JSON tickFrames at 55 Hz."
+  }
+}

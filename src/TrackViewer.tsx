@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { ClipboardCopy, Focus, Gauge, MousePointer2, RotateCcw } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import type { Track } from './tracks'
 
 type Props = {
@@ -9,6 +10,48 @@ type Props = {
   onProgress: (progress: number) => void
   onReady: (animations: number) => void
   onError: (message: string) => void
+}
+
+type RuntimeManifest = {
+  textureAnimations?: string
+  skybox?: string
+}
+
+type TextureAnimationIndex = {
+  animations: Array<{ animationIndex: number; metadata: string }>
+}
+
+type TextureAnimationMetadata = {
+  animationIndex: number
+  materialIndex: number
+  tickRateHz: number
+  cycleTicks: number
+  tickFrames: number[]
+  atlas: { file: string; cellWidth: number; cellHeight: number }
+  frames: Array<{
+    index: number
+    column: number
+    rowTop: number
+    uvOffset: [number, number]
+    uvScale: [number, number]
+  }>
+}
+
+type SkyboxMetadata = {
+  faces: Record<'RT' | 'LF' | 'UP' | 'DN' | 'FR' | 'BK', { file: string }>
+}
+
+type TextureAnimator = {
+  texture: THREE.CanvasTexture
+  context: CanvasRenderingContext2D
+  atlasImage: HTMLImageElement
+  cellWidth: number
+  cellHeight: number
+  currentFrame: number
+  tickRateHz: number
+  cycleTicks: number
+  tickFrames: number[]
+  frames: TextureAnimationMetadata['frames']
 }
 
 type TexturedMaterial = THREE.Material & {
@@ -111,8 +154,126 @@ function createIndependentLoopClips(sourceClips: THREE.AnimationClip[]) {
   return clips
 }
 
+function resolveRelativeUrl(baseUrl: string, relativeUrl: string) {
+  return new URL(relativeUrl, new URL(baseUrl, window.location.href)).toString()
+}
+
+async function loadJson<T>(url: string) {
+  const response = await fetch(url)
+  if (!response.ok) throw new Error(`HTTP ${response.status}: ${url}`)
+  return response.json() as Promise<T>
+}
+
+function loadImage(url: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image()
+    image.onload = () => resolve(image)
+    image.onerror = reject
+    image.src = url
+  })
+}
+
+async function loadCubeTexture(urls: string[], mirroredFaces: number[]) {
+  const images = await Promise.all(urls.map(loadImage))
+  const faces = images.map((image, index) => {
+    if (!mirroredFaces.includes(index)) return image
+    const canvas = document.createElement('canvas')
+    canvas.width = image.naturalWidth
+    canvas.height = image.naturalHeight
+    const context = canvas.getContext('2d')!
+    context.translate(canvas.width, canvas.height)
+    context.scale(-1, -1)
+    context.drawImage(image, 0, 0)
+    return canvas
+  })
+  const texture = new THREE.CubeTexture(faces)
+  texture.needsUpdate = true
+  return texture
+}
+
+function drawTextureAnimationFrame(animator: TextureAnimator, frameIndex: number) {
+  if (frameIndex === animator.currentFrame) return
+  const frame = animator.frames[frameIndex] ?? animator.frames[0]
+  animator.context.clearRect(0, 0, animator.cellWidth, animator.cellHeight)
+  animator.context.drawImage(
+    animator.atlasImage,
+    frame.column * animator.cellWidth,
+    frame.rowTop * animator.cellHeight,
+    animator.cellWidth,
+    animator.cellHeight,
+    0,
+    0,
+    animator.cellWidth,
+    animator.cellHeight,
+  )
+  animator.currentFrame = frameIndex
+  animator.texture.needsUpdate = true
+}
+
+function readCameraSnapshot() {
+  const params = new URLSearchParams(window.location.search)
+  const position = params.get('p')?.split(',').map(Number)
+  const rotation = params.get('r')?.split(',').map(Number)
+  const fov = Number(params.get('fov'))
+  if (
+    position?.length !== 3 || rotation?.length !== 3 ||
+    !position.every(Number.isFinite) || !rotation.every(Number.isFinite)
+  ) return null
+  return { position, rotation, fov: Number.isFinite(fov) ? fov : 75 }
+}
+
 export function TrackViewer({ track, onProgress, onReady, onError }: Props) {
+  const [, setSearchParams] = useSearchParams()
   const mountRef = useRef<HTMLDivElement>(null)
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
+  const [moveSpeed, setMoveSpeed] = useState(60)
+  const [cameraFov, setCameraFov] = useState(75)
+  const [mouseSensitivity, setMouseSensitivity] = useState(6)
+  const [snapshotCopied, setSnapshotCopied] = useState(false)
+  const [dragging, setDragging] = useState(false)
+  const moveSpeedRef = useRef(60)
+  const cameraFovRef = useRef(75)
+  const mouseSensitivityRef = useRef(6)
+
+  const updateMoveSpeed = (value: number) => {
+    const nextSpeed = THREE.MathUtils.clamp(Math.round(value), 5, 200)
+    moveSpeedRef.current = nextSpeed
+    setMoveSpeed(nextSpeed)
+  }
+
+  const updateCameraFov = (value: number) => {
+    const nextFov = THREE.MathUtils.clamp(Math.round(value), 40, 110)
+    cameraFovRef.current = nextFov
+    setCameraFov(nextFov)
+  }
+
+  const updateMouseSensitivity = (value: number) => {
+    const nextSensitivity = THREE.MathUtils.clamp(Math.round(value), 1, 12)
+    mouseSensitivityRef.current = nextSensitivity
+    setMouseSensitivity(nextSensitivity)
+  }
+
+  const createCameraSnapshot = async () => {
+    const camera = cameraRef.current
+    if (!camera) return
+    const formatPosition = (value: number) => value.toFixed(4)
+    const formatRotation = (value: number) => value.toFixed(6)
+    const params = new URLSearchParams(window.location.search)
+    params.set('p', camera.position.toArray().map(formatPosition).join(','))
+    params.set('r', [camera.rotation.x, camera.rotation.y, camera.rotation.z].map(formatRotation).join(','))
+    params.set('fov', String(Math.round(camera.fov)))
+    setSearchParams(params, { replace: true })
+
+    const url = new URL(window.location.href)
+    url.search = params.toString()
+    try {
+      await navigator.clipboard.writeText(url.toString())
+      setSnapshotCopied(true)
+      window.setTimeout(() => setSnapshotCopied(false), 1800)
+    } catch {
+      setSnapshotCopied(false)
+    }
+  }
 
   useEffect(() => {
     const mount = mountRef.current
@@ -121,8 +282,18 @@ export function TrackViewer({ track, onProgress, onReady, onError }: Props) {
     let disposed = false
     let frame = 0
     let mixer: THREE.AnimationMixer | undefined
+    let animationElapsed = 0
+    let baseMoveSpeed = 10
+    const pressedKeys = new Set<string>()
+    const movement = new THREE.Vector3()
+    const forward = new THREE.Vector3()
+    const right = new THREE.Vector3()
+    const worldUp = new THREE.Vector3(0, 1, 0)
+    const textureAnimators: TextureAnimator[] = []
+    const runtimeTextures: THREE.Texture[] = []
     const scene = new THREE.Scene()
-    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 10000)
+    const camera = new THREE.PerspectiveCamera(cameraFovRef.current, 1, 0.1, 10000)
+    cameraRef.current = camera
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.outputColorSpace = THREE.SRGBColorSpace
@@ -131,19 +302,152 @@ export function TrackViewer({ track, onProgress, onReady, onError }: Props) {
     renderer.shadowMap.enabled = false
     mount.appendChild(renderer.domElement)
 
-    const controls = new OrbitControls(camera, renderer.domElement)
-    controls.enableDamping = true
-    controls.dampingFactor = 0.06
-    controls.screenSpacePanning = true
+    let isDragging = false
+    camera.rotation.order = 'YXZ'
 
-    const textureLoader = new THREE.TextureLoader()
-    textureLoader.load(track.skyboxUrl, (texture) => {
-      if (disposed) return texture.dispose()
-      texture.mapping = THREE.EquirectangularReflectionMapping
-      texture.colorSpace = THREE.SRGBColorSpace
-      scene.background = texture
-      scene.environment = texture
-    }, undefined, () => onError('Nie udało się wczytać skyboxa.'))
+    const stopDragging = () => {
+      if (document.pointerLockElement === renderer.domElement) document.exitPointerLock()
+      isDragging = false
+      setDragging(false)
+      renderer.domElement.style.cursor = 'grab'
+    }
+    const onWindowBlur = () => {
+      stopDragging()
+      pressedKeys.clear()
+    }
+    const onPointerDown = (event: PointerEvent) => {
+      if (event.button !== 0) return
+      renderer.domElement.requestPointerLock()
+    }
+    const onPointerLockChange = () => {
+      isDragging = document.pointerLockElement === renderer.domElement
+      setDragging(isDragging)
+      renderer.domElement.style.cursor = isDragging ? 'none' : 'grab'
+    }
+    const onPointerMove = (event: MouseEvent) => {
+      if (!isDragging || document.pointerLockElement !== renderer.domElement) return
+      const sensitivity = mouseSensitivityRef.current * 0.001
+      camera.rotation.y -= event.movementX * sensitivity
+      camera.rotation.x = THREE.MathUtils.clamp(
+        camera.rotation.x - event.movementY * sensitivity,
+        -Math.PI / 2 + 0.01,
+        Math.PI / 2 - 0.01,
+      )
+    }
+    const onPointerUp = (event: MouseEvent) => {
+      if (event.button === 0) stopDragging()
+    }
+    const onContextMenu = (event: MouseEvent) => event.preventDefault()
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.target instanceof HTMLInputElement) return
+      pressedKeys.add(event.code)
+    }
+    const onKeyUp = (event: KeyboardEvent) => pressedKeys.delete(event.code)
+    const onWheel = (event: WheelEvent) => {
+      event.preventDefault()
+      updateMoveSpeed(moveSpeedRef.current + (event.deltaY < 0 ? 5 : -5))
+    }
+    renderer.domElement.style.cursor = 'grab'
+    renderer.domElement.addEventListener('pointerdown', onPointerDown)
+    renderer.domElement.addEventListener('contextmenu', onContextMenu)
+    renderer.domElement.addEventListener('wheel', onWheel, { passive: false })
+    document.addEventListener('mousemove', onPointerMove)
+    document.addEventListener('mouseup', onPointerUp)
+    document.addEventListener('pointerlockchange', onPointerLockChange)
+    window.addEventListener('keydown', onKeyDown)
+    window.addEventListener('keyup', onKeyUp)
+    window.addEventListener('blur', onWindowBlur)
+
+    if (track.skyboxUrl) {
+      new THREE.TextureLoader().load(track.skyboxUrl, (texture) => {
+        if (disposed) return texture.dispose()
+        texture.mapping = THREE.EquirectangularReflectionMapping
+        texture.colorSpace = THREE.SRGBColorSpace
+        scene.background = texture
+        scene.environment = texture
+      }, undefined, () => onError('Nie udało się wczytać skyboxa.'))
+    }
+
+    const setupRuntimeAssets = async (model: THREE.Object3D) => {
+      if (!track.runtimeUrl) return
+
+      try {
+        const runtime = await loadJson<RuntimeManifest>(track.runtimeUrl)
+
+        if (runtime.skybox) {
+          const skyboxUrl = resolveRelativeUrl(track.runtimeUrl, runtime.skybox)
+          const skybox = await loadJson<SkyboxMetadata>(skyboxUrl)
+          const faceUrl = (face: keyof SkyboxMetadata['faces']) => resolveRelativeUrl(skyboxUrl, skybox.faces[face].file)
+          const cubeTexture = await loadCubeTexture([
+            faceUrl('RT'), faceUrl('LF'), faceUrl('UP'),
+            faceUrl('DN'), faceUrl('FR'), faceUrl('BK'),
+          ], [0, 1, 4, 5])
+          if (disposed) return cubeTexture.dispose()
+          cubeTexture.colorSpace = THREE.SRGBColorSpace
+          runtimeTextures.push(cubeTexture)
+          if (scene.background instanceof THREE.Texture) scene.background.dispose()
+          scene.background = cubeTexture
+          scene.environment = cubeTexture
+        }
+
+        if (runtime.textureAnimations) {
+          const indexUrl = resolveRelativeUrl(track.runtimeUrl, runtime.textureAnimations)
+          const index = await loadJson<TextureAnimationIndex>(indexUrl)
+
+          for (const entry of index.animations) {
+            const metadataUrl = resolveRelativeUrl(indexUrl, entry.metadata)
+            const metadata = await loadJson<TextureAnimationMetadata>(metadataUrl)
+            const atlasImage = await loadImage(resolveRelativeUrl(metadataUrl, metadata.atlas.file))
+            if (disposed) return
+            const canvas = document.createElement('canvas')
+            canvas.width = metadata.atlas.cellWidth
+            canvas.height = metadata.atlas.cellHeight
+            const context = canvas.getContext('2d')!
+            const frameTexture = new THREE.CanvasTexture(canvas)
+            frameTexture.colorSpace = THREE.SRGBColorSpace
+            frameTexture.flipY = false
+            frameTexture.wrapS = THREE.RepeatWrapping
+            frameTexture.wrapT = THREE.RepeatWrapping
+            frameTexture.generateMipmaps = false
+            frameTexture.minFilter = THREE.LinearFilter
+            frameTexture.magFilter = THREE.LinearFilter
+            runtimeTextures.push(frameTexture)
+
+            const materialName = `mat_${String(metadata.materialIndex).padStart(3, '0')}`
+            let matched = false
+            model.traverse((object) => {
+              if (!(object instanceof THREE.Mesh)) return
+              const materials = Array.isArray(object.material) ? object.material : [object.material]
+              materials.forEach((material) => {
+                if (material.name !== materialName || !(material instanceof THREE.MeshBasicMaterial)) return
+                material.map = frameTexture
+                material.needsUpdate = true
+                matched = true
+              })
+            })
+
+            if (matched) {
+              const animator: TextureAnimator = {
+                texture: frameTexture,
+                context,
+                atlasImage,
+                cellWidth: metadata.atlas.cellWidth,
+                cellHeight: metadata.atlas.cellHeight,
+                currentFrame: -1,
+                tickRateHz: metadata.tickRateHz,
+                cycleTicks: metadata.cycleTicks,
+                tickFrames: metadata.tickFrames,
+                frames: metadata.frames,
+              }
+              drawTextureAnimationFrame(animator, metadata.tickFrames[0] ?? 0)
+              textureAnimators.push(animator)
+            }
+          }
+        }
+      } catch (runtimeError) {
+        console.warn('Nie udało się uruchomić zasobów ToonCar runtime.', runtimeError)
+      }
+    }
 
     new GLTFLoader().load(
       track.modelUrl,
@@ -161,17 +465,26 @@ export function TrackViewer({ track, onProgress, onReady, onError }: Props) {
           }
         })
         scene.add(model)
+        void setupRuntimeAssets(model)
 
         const box = new THREE.Box3().setFromObject(model)
         const center = box.getCenter(new THREE.Vector3())
         const size = box.getSize(new THREE.Vector3())
         const radius = Math.max(size.x, size.y, size.z) || 10
-        controls.target.copy(center)
-        camera.position.copy(center).add(new THREE.Vector3(radius * 0.85, radius * 0.55, radius * 0.85))
+        baseMoveSpeed = Math.max(radius * 0.15, 1)
+        camera.position.copy(center).add(new THREE.Vector3(radius * 0.3, radius * 0.15, radius * 0.3))
+        camera.lookAt(center)
+        camera.rotation.order = 'YXZ'
+        const initialView = readCameraSnapshot() ?? track.cameraStart
+        if (initialView) {
+          camera.position.fromArray(initialView.position)
+          camera.rotation.set(initialView.rotation[0], initialView.rotation[1], initialView.rotation[2], 'YXZ')
+          updateCameraFov(initialView.fov)
+          camera.fov = cameraFovRef.current
+        }
         camera.near = Math.max(radius / 1000, 0.1)
         camera.far = radius * 20
         camera.updateProjectionMatrix()
-        controls.update()
 
         mixer = new THREE.AnimationMixer(model)
         const loopClips = createIndependentLoopClips(gltf.animations)
@@ -196,17 +509,50 @@ export function TrackViewer({ track, onProgress, onReady, onError }: Props) {
     const clock = new THREE.Clock()
     const render = () => {
       frame = requestAnimationFrame(render)
-      mixer?.update(Math.min(clock.getDelta(), 0.1))
-      controls.update()
+      const delta = Math.min(clock.getDelta(), 0.1)
+      if (camera.fov !== cameraFovRef.current) {
+        camera.fov = cameraFovRef.current
+        camera.updateProjectionMatrix()
+      }
+      animationElapsed += delta
+      mixer?.update(delta)
+      if (pressedKeys.size > 0) {
+        const sprintMultiplier = pressedKeys.has('ShiftLeft') || pressedKeys.has('ShiftRight') ? 2 : 1
+        const distance = baseMoveSpeed * (moveSpeedRef.current / 50) * sprintMultiplier * delta
+        movement.set(0, 0, 0)
+        camera.getWorldDirection(forward)
+        right.set(1, 0, 0).applyQuaternion(camera.quaternion)
+        if (pressedKeys.has('KeyW')) movement.add(forward)
+        if (pressedKeys.has('KeyS')) movement.sub(forward)
+        if (pressedKeys.has('KeyA')) movement.sub(right)
+        if (pressedKeys.has('KeyD')) movement.add(right)
+        if (pressedKeys.has('KeyQ')) movement.sub(worldUp)
+        if (pressedKeys.has('KeyE')) movement.add(worldUp)
+        if (movement.lengthSq() > 0) camera.position.addScaledVector(movement.normalize(), distance)
+      }
+      textureAnimators.forEach((animator) => {
+        const tick = Math.floor(animationElapsed * animator.tickRateHz) % animator.cycleTicks
+        drawTextureAnimationFrame(animator, animator.tickFrames[tick] ?? 0)
+      })
       renderer.render(scene, camera)
     }
     render()
 
     return () => {
       disposed = true
+      cameraRef.current = null
+      if (document.pointerLockElement === renderer.domElement) document.exitPointerLock()
       cancelAnimationFrame(frame)
       observer.disconnect()
-      controls.dispose()
+      renderer.domElement.removeEventListener('pointerdown', onPointerDown)
+      renderer.domElement.removeEventListener('contextmenu', onContextMenu)
+      renderer.domElement.removeEventListener('wheel', onWheel)
+      document.removeEventListener('mousemove', onPointerMove)
+      document.removeEventListener('mouseup', onPointerUp)
+      document.removeEventListener('pointerlockchange', onPointerLockChange)
+      window.removeEventListener('keydown', onKeyDown)
+      window.removeEventListener('keyup', onKeyUp)
+      window.removeEventListener('blur', onWindowBlur)
       mixer?.stopAllAction()
       scene.traverse((object) => {
         if (object instanceof THREE.Mesh) {
@@ -216,10 +562,81 @@ export function TrackViewer({ track, onProgress, onReady, onError }: Props) {
         }
       })
       if (scene.background instanceof THREE.Texture) scene.background.dispose()
+      runtimeTextures.forEach((texture) => texture.dispose())
       renderer.dispose()
       renderer.domElement.remove()
     }
   }, [track, onError, onProgress, onReady])
 
-  return <div ref={mountRef} className="absolute inset-0" aria-label={`Widok 3D trasy ${track.name}`} />
+  return (
+    <>
+      <div ref={mountRef} className="absolute inset-0" aria-label={`Widok 3D trasy ${track.name}`} />
+      <div className="pointer-events-auto absolute bottom-20 left-7 z-20 w-56 rounded-xl border border-white/10 bg-black/45 px-4 py-3 backdrop-blur-md max-sm:bottom-16 max-sm:left-4">
+        <div className="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-[.14em] text-white/55">
+          <span className="flex items-center gap-1.5"><Gauge size={11} /> Prędkość lotu</span>
+          <span className="flex items-center gap-2">
+            <span className="font-mono text-[#ff8669]">{moveSpeed}</span>
+            <button type="button" onClick={() => updateMoveSpeed(60)} className="rounded border border-white/10 p-1 text-white/35 hover:bg-white/10 hover:text-white" aria-label="Resetuj prędkość" title="Resetuj"><RotateCcw size={9} /></button>
+          </span>
+        </div>
+        <input
+          type="range"
+          min="5"
+          max="200"
+          step="5"
+          value={moveSpeed}
+          onChange={(event) => updateMoveSpeed(Number(event.target.value))}
+          className="h-1.5 w-full cursor-pointer accent-[#ff5c35]"
+          aria-label="Prędkość poruszania się"
+        />
+        <div className="my-3 h-px bg-white/8" />
+        <div className="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-[.14em] text-white/55">
+          <span className="flex items-center gap-1.5"><Focus size={11} /> Pole widzenia</span>
+          <span className="flex items-center gap-2">
+            <span className="font-mono text-[#ff8669]">{cameraFov}°</span>
+            <button type="button" onClick={() => updateCameraFov(75)} className="rounded border border-white/10 p-1 text-white/35 hover:bg-white/10 hover:text-white" aria-label="Resetuj pole widzenia" title="Resetuj"><RotateCcw size={9} /></button>
+          </span>
+        </div>
+        <input
+          type="range"
+          min="40"
+          max="110"
+          step="1"
+          value={cameraFov}
+          onChange={(event) => updateCameraFov(Number(event.target.value))}
+          className="h-1.5 w-full cursor-pointer accent-[#ff5c35]"
+          aria-label="Pole widzenia kamery"
+        />
+        <div className="my-3 h-px bg-white/8" />
+        <div className="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-[.14em] text-white/55">
+          <span className="flex items-center gap-1.5"><MousePointer2 size={11} /> Czułość myszy</span>
+          <span className="flex items-center gap-2">
+            <span className="font-mono text-[#ff8669]">{(mouseSensitivity / 6).toFixed(1)}×</span>
+            <button type="button" onClick={() => updateMouseSensitivity(6)} className="rounded border border-white/10 p-1 text-white/35 hover:bg-white/10 hover:text-white" aria-label="Resetuj czułość myszy" title="Resetuj"><RotateCcw size={9} /></button>
+          </span>
+        </div>
+        <input
+          type="range"
+          min="1"
+          max="12"
+          step="1"
+          value={mouseSensitivity}
+          onChange={(event) => updateMouseSensitivity(Number(event.target.value))}
+          className="h-1.5 w-full cursor-pointer accent-[#ff5c35]"
+          aria-label="Czułość sterowania myszą"
+        />
+        <button
+          type="button"
+          onClick={() => void createCameraSnapshot()}
+          className="mt-3 inline-flex w-fit items-center rounded border border-[#ff5c35]/30 bg-[#ff5c35]/10 px-1.5 py-1 text-[8px] font-bold leading-none text-[#ff9a81] transition hover:bg-[#ff5c35]/20 hover:text-white"
+        >
+          <ClipboardCopy size={10} className="mr-1" />
+          {snapshotCopied ? 'Skopiowano' : 'Kopiuj widok'}
+        </button>
+        <p className="mt-2 text-[9px] text-white/35">
+          {dragging ? 'Przeciągaj, aby się rozglądać' : 'LPM: rozglądanie · WASD · Q/E · Shift ×2'}
+        </p>
+      </div>
+    </>
+  )
 }

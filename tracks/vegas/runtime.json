@@ -1,0 +1,15 @@
+{
+  "schema": "tooncar-threejs-runtime-v1",
+  "source": {
+    "filename": "Vegas.r3d",
+    "size": 19829394,
+    "sha256": "515bd861fb2c1dd7f3995a9327eb5d1db81ed1d6dc3f11d321fe169cdc3f84d2"
+  },
+  "textureAnimations": "texture_animations.json",
+  "skybox": "skybox/skybox.json",
+  "expectedModel": "Vegas.glb",
+  "notes": {
+    "transformAnimations": "Play GLTF animation clips with THREE.AnimationMixer and LoopRepeat.",
+    "textureAnimations": "Use atlas JSON tickFrames at 55 Hz."
+  }
+}

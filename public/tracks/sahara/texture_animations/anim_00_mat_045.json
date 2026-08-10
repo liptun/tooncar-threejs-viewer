@@ -1,0 +1,365 @@
+{
+  "schema": "tooncar-texture-animation-v1",
+  "animationIndex": 0,
+  "materialIndex": 45,
+  "materialResourceId": 25623,
+  "loop": true,
+  "tickRateHz": 55,
+  "frameStepPerTick": 0.28333336114883423,
+  "cycleTicks": 57,
+  "cycleSeconds": 1.0363636363636364,
+  "tickFrames": [
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    2,
+    2,
+    2,
+    3,
+    3,
+    3,
+    3,
+    4,
+    4,
+    4,
+    5,
+    5,
+    5,
+    5,
+    6,
+    6,
+    6,
+    7,
+    7,
+    7,
+    7,
+    8,
+    8,
+    8,
+    9,
+    9,
+    9,
+    9,
+    10,
+    10,
+    10,
+    11,
+    11,
+    11,
+    11,
+    12,
+    12,
+    12,
+    13,
+    13,
+    13,
+    13,
+    14,
+    14,
+    14,
+    15,
+    15,
+    15,
+    15
+  ],
+  "frameDurationsTicks": [
+    4,
+    4,
+    3,
+    4,
+    3,
+    4,
+    3,
+    4,
+    3,
+    4,
+    3,
+    4,
+    3,
+    4,
+    3,
+    4
+  ],
+  "atlas": {
+    "file": "anim_00_mat_045.png",
+    "width": 256,
+    "height": 256,
+    "columns": 4,
+    "rows": 4,
+    "cellWidth": 64,
+    "cellHeight": 64,
+    "uvOrigin": "bottom-left"
+  },
+  "frames": [
+    {
+      "index": 0,
+      "sourceName": "caust00.bmp",
+      "sourcePng": "000_caust00.png",
+      "sourceResourceId": 52089,
+      "column": 0,
+      "rowTop": 0,
+      "uvOffset": [
+        0.0,
+        0.75
+      ],
+      "uvScale": [
+        0.25,
+        0.25
+      ]
+    },
+    {
+      "index": 1,
+      "sourceName": "caust02.bmp",
+      "sourcePng": "001_caust02.png",
+      "sourceResourceId": 52277,
+      "column": 1,
+      "rowTop": 0,
+      "uvOffset": [
+        0.25,
+        0.75
+      ],
+      "uvScale": [
+        0.25,
+        0.25
+      ]
+    },
+    {
+      "index": 2,
+      "sourceName": "caust04.bmp",
+      "sourcePng": "002_caust04.png",
+      "sourceResourceId": 52465,
+      "column": 2,
+      "rowTop": 0,
+      "uvOffset": [
+        0.5,
+        0.75
+      ],
+      "uvScale": [
+        0.25,
+        0.25
+      ]
+    },
+    {
+      "index": 3,
+      "sourceName": "caust06.bmp",
+      "sourcePng": "003_caust06.png",
+      "sourceResourceId": 52653,
+      "column": 3,
+      "rowTop": 0,
+      "uvOffset": [
+        0.75,
+        0.75
+      ],
+      "uvScale": [
+        0.25,
+        0.25
+      ]
+    },
+    {
+      "index": 4,
+      "sourceName": "caust08.bmp",
+      "sourcePng": "004_caust08.png",
+      "sourceResourceId": 52841,
+      "column": 0,
+      "rowTop": 1,
+      "uvOffset": [
+        0.0,
+        0.5
+      ],
+      "uvScale": [
+        0.25,
+        0.25
+      ]
+    },
+    {
+      "index": 5,
+      "sourceName": "caust10.bmp",
+      "sourcePng": "005_caust10.png",
+      "sourceResourceId": 52221,
+      "column": 1,
+      "rowTop": 1,
+      "uvOffset": [
+        0.25,
+        0.5
+      ],
+      "uvScale": [
+        0.25,
+        0.25
+      ]
+    },
+    {
+      "index": 6,
+      "sourceName": "caust12.bmp",
+      "sourcePng": "006_caust12.png",
+      "sourceResourceId": 52411,
+      "column": 2,
+      "rowTop": 1,
+      "uvOffset": [
+        0.5,
+        0.5
+      ],
+      "uvScale": [
+        0.25,
+        0.25
+      ]
+    },
+    {
+      "index": 7,
+      "sourceName": "caust14.bmp",
+      "sourcePng": "007_caust14.png",
+      "sourceResourceId": 52601,
+      "column": 3,
+      "rowTop": 1,
+      "uvOffset": [
+        0.75,
+        0.5
+      ],
+      "uvScale": [
+        0.25,
+        0.25
+      ]
+    },
+    {
+      "index": 8,
+      "sourceName": "caust16.bmp",
+      "sourcePng": "008_caust16.png",
+      "sourceResourceId": 52791,
+      "column": 0,
+      "rowTop": 2,
+      "uvOffset": [
+        0.0,
+        0.25
+      ],
+      "uvScale": [
+        0.25,
+        0.25
+      ]
+    },
+    {
+      "index": 9,
+      "sourceName": "caust18.bmp",
+      "sourcePng": "009_caust18.png",
+      "sourceResourceId": 52981,
+      "column": 1,
+      "rowTop": 2,
+      "uvOffset": [
+        0.25,
+        0.25
+      ],
+      "uvScale": [
+        0.25,
+        0.25
+      ]
+    },
+    {
+      "index": 10,
+      "sourceName": "caust20.bmp",
+      "sourcePng": "010_caust20.png",
+      "sourceResourceId": 52353,
+      "column": 2,
+      "rowTop": 2,
+      "uvOffset": [
+        0.5,
+        0.25
+      ],
+      "uvScale": [
+        0.25,
+        0.25
+      ]
+    },
+    {
+      "index": 11,
+      "sourceName": "caust22.bmp",
+      "sourcePng": "011_caust22.png",
+      "sourceResourceId": 52545,
+      "column": 3,
+      "rowTop": 2,
+      "uvOffset": [
+        0.75,
+        0.25
+      ],
+      "uvScale": [
+        0.25,
+        0.25
+      ]
+    },
+    {
+      "index": 12,
+      "sourceName": "caust24.bmp",
+      "sourcePng": "012_caust24.png",
+      "sourceResourceId": 52737,
+      "column": 0,
+      "rowTop": 3,
+      "uvOffset": [
+        0.0,
+        0.0
+      ],
+      "uvScale": [
+        0.25,
+        0.25
+      ]
+    },
+    {
+      "index": 13,
+      "sourceName": "caust26.bmp",
+      "sourcePng": "013_caust26.png",
+      "sourceResourceId": 52929,
+      "column": 1,
+      "rowTop": 3,
+      "uvOffset": [
+        0.25,
+        0.0
+      ],
+      "uvScale": [
+        0.25,
+        0.25
+      ]
+    },
+    {
+      "index": 14,
+      "sourceName": "caust28.bmp",
+      "sourcePng": "014_caust28.png",
+      "sourceResourceId": 53121,
+      "column": 2,
+      "rowTop": 3,
+      "uvOffset": [
+        0.5,
+        0.0
+      ],
+      "uvScale": [
+        0.25,
+        0.25
+      ]
+    },
+    {
+      "index": 15,
+      "sourceName": "caust30.bmp",
+      "sourcePng": "015_caust30.png",
+      "sourceResourceId": 52485,
+      "column": 3,
+      "rowTop": 3,
+      "uvOffset": [
+        0.75,
+        0.0
+      ],
+      "uvScale": [
+        0.25,
+        0.25
+      ]
+    }
+  ],
+  "threeJsPlayback": {
+    "method": "texture.offset + texture.repeat",
+    "repeat": [
+      0.25,
+      0.25
+    ],
+    "frameSelection": "floor(elapsedSeconds * tickRateHz) % cycleTicks -> tickFrames[tick]",
+    "flipY": false
+  }
+}

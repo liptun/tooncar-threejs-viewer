@@ -1,0 +1,20 @@
+{
+  "schema": "tooncar-texture-animations-index-v1",
+  "source": {
+    "filename": "Amazonia.r3d",
+    "size": 12053440,
+    "sha256": "5eab7bd3df9b437b6b211bf896a303cfafd0ef8ddc416834c391a2ee64027d83"
+  },
+  "tickRateHz": 55,
+  "animations": [
+    {
+      "animationIndex": 0,
+      "materialIndex": 22,
+      "atlas": "texture_animations/anim_00_mat_022.png",
+      "metadata": "texture_animations/anim_00_mat_022.json",
+      "frameCount": 16,
+      "cycleTicks": 57,
+      "cycleSeconds": 1.0363636363636364
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "schema": "tooncar-threejs-runtime-v1",
+  "source": {
+    "filename": "Atolon.r3d",
+    "size": 9804408,
+    "sha256": "023bb5b9da51ac7bbb10fc40e1d5a544d0a1bd483edff93a2c390a44bad13795"
+  },
+  "textureAnimations": "texture_animations.json",
+  "skybox": "skybox/skybox.json",
+  "expectedModel": "Atolon.glb",
+  "notes": {
+    "transformAnimations": "Play GLTF animation clips with THREE.AnimationMixer and LoopRepeat.",
+    "textureAnimations": "Use atlas JSON tickFrames at 55 Hz."
+  }
+}

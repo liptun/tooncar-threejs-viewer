@@ -1,29 +1,34 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom'
 import { ChevronRight, CircleHelp, Gauge, Map, Maximize, MousePointer2, Sparkles } from 'lucide-react'
 import { TrackViewer } from './TrackViewer'
 import { tracks } from './tracks'
 
-export default function App() {
-  const [selectedId, setSelectedId] = useState(tracks[0].id)
+function TrackPage() {
+  const { trackId } = useParams()
+  const navigate = useNavigate()
   const [progress, setProgress] = useState(0)
   const [ready, setReady] = useState(false)
-  const [animations, setAnimations] = useState(0)
   const [error, setError] = useState('')
-  const track = tracks.find((item) => item.id === selectedId) ?? tracks[0]
+  const requestedTrack = tracks.find((item) => item.id === trackId)
+  const track = requestedTrack ?? tracks[0]
+  const selectedId = track.id
 
-  const handleReady = useCallback((count: number) => {
-    setAnimations(count)
-    setReady(true)
-  }, [])
+  const handleReady = useCallback(() => setReady(true), [])
   const handleError = useCallback((message: string) => setError(message), [])
   const handleProgress = useCallback((value: number) => setProgress(value), [])
 
-  const selectTrack = (id: string) => {
-    setSelectedId(id)
+  useEffect(() => {
     setProgress(0)
     setReady(false)
     setError('')
+  }, [track.id])
+
+  const selectTrack = (id: string) => {
+    navigate(`/track/${id}`)
   }
+
+  if (!requestedTrack) return <Navigate to={`/track/${tracks[0].id}`} replace />
 
   return (
     <main className="flex h-dvh w-full overflow-hidden bg-[#080a0d] text-white">
@@ -73,7 +78,7 @@ export default function App() {
         <footer className="border-t border-white/8 p-5 max-md:p-3">
           <div className="flex items-center gap-2 text-[11px] text-white/30 max-md:justify-center">
             <CircleHelp size={14} />
-            <span className="max-md:hidden">Przeciągnij, aby obrócić widok</span>
+            <span className="max-md:hidden">Przytrzymaj LPM, aby sterować kamerą</span>
           </div>
         </footer>
       </aside>
@@ -110,21 +115,23 @@ export default function App() {
         {error && <div className="absolute inset-0 grid place-items-center bg-[#0c1015] text-sm text-red-300">{error}</div>}
 
         {ready && (
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between bg-gradient-to-t from-black/55 to-transparent p-7 max-sm:p-4">
-            <div className="flex gap-2">
-              <span className="flex items-center gap-2 rounded-full border border-white/10 bg-black/30 px-3 py-2 text-[10px] font-semibold text-white/60 backdrop-blur-md">
-                <span className="size-1.5 animate-pulse rounded-full bg-emerald-400" /> LIVE
-              </span>
-              <span className="rounded-full border border-white/10 bg-black/30 px-3 py-2 text-[10px] font-semibold text-white/45 backdrop-blur-md">
-                {animations} {animations === 1 ? 'ANIMACJA' : 'ANIMACJI'}
-              </span>
-            </div>
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-end bg-gradient-to-t from-black/55 to-transparent p-7 max-sm:p-4">
             <div className="flex items-center gap-2 text-[10px] font-medium text-white/35 max-sm:hidden">
-              <MousePointer2 size={13} /> Obrót: LPM · Przesunięcie: PPM · Zoom: rolka
+              <MousePointer2 size={13} /> Mysz: rozglądanie · WASD: lot · Q/E: dół/góra · Shift: sprint ×2
             </div>
           </div>
         )}
       </section>
     </main>
+  )
+}
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<Navigate to={`/track/${tracks[0].id}`} replace />} />
+      <Route path="/track/:trackId" element={<TrackPage />} />
+      <Route path="*" element={<Navigate to={`/track/${tracks[0].id}`} replace />} />
+    </Routes>
   )
 }

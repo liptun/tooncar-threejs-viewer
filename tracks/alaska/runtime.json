@@ -1,0 +1,15 @@
+{
+  "schema": "tooncar-threejs-runtime-v1",
+  "source": {
+    "filename": "Alaska.r3d",
+    "size": 8645420,
+    "sha256": "bcf4f418db6a6c3530c0b76354c38f550cdeab15ab972dfc5e99cebd6591eb74"
+  },
+  "textureAnimations": "texture_animations.json",
+  "skybox": "skybox/skybox.json",
+  "expectedModel": "Alaska.glb",
+  "notes": {
+    "transformAnimations": "Play GLTF animation clips with THREE.AnimationMixer and LoopRepeat.",
+    "textureAnimations": "Use atlas JSON tickFrames at 55 Hz."
+  }
+}

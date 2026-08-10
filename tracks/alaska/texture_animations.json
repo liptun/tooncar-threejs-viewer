@@ -1,0 +1,10 @@
+{
+  "schema": "tooncar-texture-animations-index-v1",
+  "source": {
+    "filename": "Alaska.r3d",
+    "size": 8645420,
+    "sha256": "bcf4f418db6a6c3530c0b76354c38f550cdeab15ab972dfc5e99cebd6591eb74"
+  },
+  "tickRateHz": 55,
+  "animations": []
+}

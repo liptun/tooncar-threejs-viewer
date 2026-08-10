@@ -1,0 +1,38 @@
+{
+  "schema": "tooncar-texture-animations-index-v1",
+  "source": {
+    "filename": "Luna.r3d",
+    "size": 13946010,
+    "sha256": "b04e494d01cc025bebe80a3f55d7b6d4b1eec18a8966a1b7cd1a6253ded4288f"
+  },
+  "tickRateHz": 55,
+  "animations": [
+    {
+      "animationIndex": 0,
+      "materialIndex": 29,
+      "atlas": "texture_animations/anim_00_mat_029.png",
+      "metadata": "texture_animations/anim_00_mat_029.json",
+      "frameCount": 2,
+      "cycleTicks": 24,
+      "cycleSeconds": 0.43636363636363634
+    },
+    {
+      "animationIndex": 1,
+      "materialIndex": 8,
+      "atlas": "texture_animations/anim_01_mat_008.png",
+      "metadata": "texture_animations/anim_01_mat_008.json",
+      "frameCount": 3,
+      "cycleTicks": 36,
+      "cycleSeconds": 0.6545454545454545
+    },
+    {
+      "animationIndex": 2,
+      "materialIndex": 30,
+      "atlas": "texture_animations/anim_02_mat_030.png",
+      "metadata": "texture_animations/anim_02_mat_030.json",
+      "frameCount": 3,
+      "cycleTicks": 36,
+      "cycleSeconds": 0.6545454545454545
+    }
+  ]
+}

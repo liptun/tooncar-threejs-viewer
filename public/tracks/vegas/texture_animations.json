@@ -1,0 +1,83 @@
+{
+  "schema": "tooncar-texture-animations-index-v1",
+  "source": {
+    "filename": "Vegas.r3d",
+    "size": 19829394,
+    "sha256": "515bd861fb2c1dd7f3995a9327eb5d1db81ed1d6dc3f11d321fe169cdc3f84d2"
+  },
+  "tickRateHz": 55,
+  "animations": [
+    {
+      "animationIndex": 0,
+      "materialIndex": 28,
+      "atlas": "texture_animations/anim_00_mat_028.png",
+      "metadata": "texture_animations/anim_00_mat_028.json",
+      "frameCount": 2,
+      "cycleTicks": 24,
+      "cycleSeconds": 0.43636363636363634
+    },
+    {
+      "animationIndex": 1,
+      "materialIndex": 40,
+      "atlas": "texture_animations/anim_01_mat_040.png",
+      "metadata": "texture_animations/anim_01_mat_040.json",
+      "frameCount": 3,
+      "cycleTicks": 36,
+      "cycleSeconds": 0.6545454545454545
+    },
+    {
+      "animationIndex": 2,
+      "materialIndex": 29,
+      "atlas": "texture_animations/anim_02_mat_029.png",
+      "metadata": "texture_animations/anim_02_mat_029.json",
+      "frameCount": 2,
+      "cycleTicks": 24,
+      "cycleSeconds": 0.43636363636363634
+    },
+    {
+      "animationIndex": 3,
+      "materialIndex": 35,
+      "atlas": "texture_animations/anim_03_mat_035.png",
+      "metadata": "texture_animations/anim_03_mat_035.json",
+      "frameCount": 2,
+      "cycleTicks": 24,
+      "cycleSeconds": 0.43636363636363634
+    },
+    {
+      "animationIndex": 4,
+      "materialIndex": 33,
+      "atlas": "texture_animations/anim_04_mat_033.png",
+      "metadata": "texture_animations/anim_04_mat_033.json",
+      "frameCount": 2,
+      "cycleTicks": 24,
+      "cycleSeconds": 0.43636363636363634
+    },
+    {
+      "animationIndex": 5,
+      "materialIndex": 34,
+      "atlas": "texture_animations/anim_05_mat_034.png",
+      "metadata": "texture_animations/anim_05_mat_034.json",
+      "frameCount": 2,
+      "cycleTicks": 24,
+      "cycleSeconds": 0.43636363636363634
+    },
+    {
+      "animationIndex": 6,
+      "materialIndex": 31,
+      "atlas": "texture_animations/anim_06_mat_031.png",
+      "metadata": "texture_animations/anim_06_mat_031.json",
+      "frameCount": 2,
+      "cycleTicks": 24,
+      "cycleSeconds": 0.43636363636363634
+    },
+    {
+      "animationIndex": 7,
+      "materialIndex": 30,
+      "atlas": "texture_animations/anim_07_mat_030.png",
+      "metadata": "texture_animations/anim_07_mat_030.json",
+      "frameCount": 2,
+      "cycleTicks": 24,
+      "cycleSeconds": 0.43636363636363634
+    }
+  ]
+}

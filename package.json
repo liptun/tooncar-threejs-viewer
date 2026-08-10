@@ -13,13 +13,14 @@
     "lucide-react": "latest",
     "react": "latest",
     "react-dom": "latest",
+    "react-router-dom": "^7.18.2",
     "three": "latest"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "@types/three": "latest",
-    "@tailwindcss/vite": "latest",
     "tailwindcss": "latest",
     "typescript": "latest",
     "vite": "latest"

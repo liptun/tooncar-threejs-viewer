@@ -1,0 +1,117 @@
+{
+  "schema": "tooncar-texture-animation-v1",
+  "animationIndex": 1,
+  "materialIndex": 29,
+  "materialResourceId": 24624,
+  "loop": true,
+  "tickRateHz": 55,
+  "frameStepPerTick": 0.10000000894069672,
+  "cycleTicks": 30,
+  "cycleSeconds": 0.5454545454545454,
+  "tickFrames": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2
+  ],
+  "frameDurationsTicks": [
+    10,
+    10,
+    10
+  ],
+  "atlas": {
+    "file": "anim_01_mat_029.png",
+    "width": 256,
+    "height": 512,
+    "columns": 2,
+    "rows": 2,
+    "cellWidth": 128,
+    "cellHeight": 256,
+    "uvOrigin": "bottom-left"
+  },
+  "frames": [
+    {
+      "index": 0,
+      "sourceName": "lgtning001.BMP",
+      "sourcePng": "003_lgtning001.png",
+      "sourceResourceId": 65514,
+      "column": 0,
+      "rowTop": 0,
+      "uvOffset": [
+        0.0,
+        0.5
+      ],
+      "uvScale": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "index": 1,
+      "sourceName": "lgtning002.BMP",
+      "sourcePng": "004_lgtning002.png",
+      "sourceResourceId": 65608,
+      "column": 1,
+      "rowTop": 0,
+      "uvOffset": [
+        0.5,
+        0.5
+      ],
+      "uvScale": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "index": 2,
+      "sourceName": "lgtning003.BMP",
+      "sourcePng": "005_lgtning003.png",
+      "sourceResourceId": 65702,
+      "column": 0,
+      "rowTop": 1,
+      "uvOffset": [
+        0.0,
+        0.0
+      ],
+      "uvScale": [
+        0.5,
+        0.5
+      ]
+    }
+  ],
+  "threeJsPlayback": {
+    "method": "texture.offset + texture.repeat",
+    "repeat": [
+      0.5,
+      0.5
+    ],
+    "frameSelection": "floor(elapsedSeconds * tickRateHz) % cycleTicks -> tickFrames[tick]",
+    "flipY": false
+  }
+}
