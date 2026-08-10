@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ClipboardCopy, Focus, Gauge, MousePointer2, RotateCcw } from 'lucide-react'
+import { Camera, Gauge } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
@@ -227,13 +227,11 @@ export function TrackViewer({ track, onProgress, onReady, onError }: Props) {
   const mountRef = useRef<HTMLDivElement>(null)
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
   const [moveSpeed, setMoveSpeed] = useState(60)
-  const [cameraFov, setCameraFov] = useState(75)
-  const [mouseSensitivity, setMouseSensitivity] = useState(6)
+  const [showSpeedIndicator, setShowSpeedIndicator] = useState(false)
   const [snapshotCopied, setSnapshotCopied] = useState(false)
-  const [dragging, setDragging] = useState(false)
+  const speedIndicatorTimeoutRef = useRef<number | null>(null)
   const moveSpeedRef = useRef(60)
   const cameraFovRef = useRef(75)
-  const mouseSensitivityRef = useRef(6)
 
   const updateMoveSpeed = (value: number) => {
     const nextSpeed = THREE.MathUtils.clamp(Math.round(value), 5, 200)
@@ -244,13 +242,6 @@ export function TrackViewer({ track, onProgress, onReady, onError }: Props) {
   const updateCameraFov = (value: number) => {
     const nextFov = THREE.MathUtils.clamp(Math.round(value), 40, 110)
     cameraFovRef.current = nextFov
-    setCameraFov(nextFov)
-  }
-
-  const updateMouseSensitivity = (value: number) => {
-    const nextSensitivity = THREE.MathUtils.clamp(Math.round(value), 1, 12)
-    mouseSensitivityRef.current = nextSensitivity
-    setMouseSensitivity(nextSensitivity)
   }
 
   const createCameraSnapshot = async () => {
@@ -308,7 +299,6 @@ export function TrackViewer({ track, onProgress, onReady, onError }: Props) {
     const stopDragging = () => {
       if (document.pointerLockElement === renderer.domElement) document.exitPointerLock()
       isDragging = false
-      setDragging(false)
       renderer.domElement.style.cursor = 'grab'
     }
     const onWindowBlur = () => {
@@ -321,12 +311,11 @@ export function TrackViewer({ track, onProgress, onReady, onError }: Props) {
     }
     const onPointerLockChange = () => {
       isDragging = document.pointerLockElement === renderer.domElement
-      setDragging(isDragging)
       renderer.domElement.style.cursor = isDragging ? 'none' : 'grab'
     }
     const onPointerMove = (event: MouseEvent) => {
       if (!isDragging || document.pointerLockElement !== renderer.domElement) return
-      const sensitivity = mouseSensitivityRef.current * 0.001
+      const sensitivity = 0.006
       camera.rotation.y -= event.movementX * sensitivity
       camera.rotation.x = THREE.MathUtils.clamp(
         camera.rotation.x - event.movementY * sensitivity,
@@ -346,6 +335,12 @@ export function TrackViewer({ track, onProgress, onReady, onError }: Props) {
     const onWheel = (event: WheelEvent) => {
       event.preventDefault()
       updateMoveSpeed(moveSpeedRef.current + (event.deltaY < 0 ? 5 : -5))
+      setShowSpeedIndicator(true)
+      if (speedIndicatorTimeoutRef.current !== null) window.clearTimeout(speedIndicatorTimeoutRef.current)
+      speedIndicatorTimeoutRef.current = window.setTimeout(() => {
+        setShowSpeedIndicator(false)
+        speedIndicatorTimeoutRef.current = null
+      }, 1200)
     }
     renderer.domElement.style.cursor = 'grab'
     renderer.domElement.addEventListener('pointerdown', onPointerDown)
@@ -540,6 +535,7 @@ export function TrackViewer({ track, onProgress, onReady, onError }: Props) {
 
     return () => {
       disposed = true
+      if (speedIndicatorTimeoutRef.current !== null) window.clearTimeout(speedIndicatorTimeoutRef.current)
       cameraRef.current = null
       if (document.pointerLockElement === renderer.domElement) document.exitPointerLock()
       cancelAnimationFrame(frame)
@@ -571,71 +567,26 @@ export function TrackViewer({ track, onProgress, onReady, onError }: Props) {
   return (
     <>
       <div ref={mountRef} className="absolute inset-0" aria-label={`Widok 3D trasy ${track.name}`} />
-      <div className="pointer-events-auto absolute bottom-20 left-7 z-20 w-56 rounded-xl border border-[#7892e4]/20 bg-[#10162d]/80 px-4 py-3 shadow-[0_12px_40px_rgba(0,0,0,.28)] backdrop-blur-md max-sm:bottom-16 max-sm:left-4">
-        <div className="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-[.14em] text-white/55">
-          <span className="flex items-center gap-1.5"><Gauge size={11} /> Prędkość lotu</span>
-          <span className="flex items-center gap-2">
-            <span className="font-mono text-[#ffd455]">{moveSpeed}</span>
-            <button type="button" onClick={() => updateMoveSpeed(60)} className="rounded border border-white/10 p-1 text-white/35 hover:bg-white/10 hover:text-white" aria-label="Resetuj prędkość" title="Resetuj"><RotateCcw size={9} /></button>
-          </span>
+      <button
+        type="button"
+        onClick={() => void createCameraSnapshot()}
+        className={`group pointer-events-auto absolute right-20 top-7 z-20 flex h-10 w-10 cursor-pointer items-center justify-center overflow-hidden rounded-xl border px-2.5 whitespace-nowrap backdrop-blur-sm transition-[width,color,background-color,border-color] duration-300 hover:w-36 max-sm:right-16 max-sm:top-4 ${snapshotCopied ? 'border-[#f3ad00]/60 bg-[#f3ad00]/20 text-[#ffd455]' : 'border-white/10 bg-black/25 text-white/60 hover:bg-white/10 hover:text-white'}`}
+        aria-label="Skopiuj link do widoku kamery"
+        title={snapshotCopied ? 'Skopiowano link' : 'Skopiuj link do widoku'}
+      >
+        <Camera size={17} className="shrink-0" />
+        <span className="ml-0 max-w-0 overflow-hidden text-[10px] font-bold uppercase tracking-[.08em] opacity-0 transition-[max-width,margin,opacity] duration-300 group-hover:ml-2 group-hover:max-w-24 group-hover:opacity-100">
+          {snapshotCopied ? 'Skopiowano' : 'Skopiuj widok'}
+        </span>
+      </button>
+      <div className={`pointer-events-none absolute bottom-3 left-3 z-20 w-44 bg-[#10162d]/45 px-3 py-2 shadow-[0_8px_24px_rgba(0,0,0,.12)] backdrop-blur-sm transition-opacity duration-300 ${showSpeedIndicator ? 'opacity-100' : 'opacity-0'}`} aria-hidden={!showSpeedIndicator}>
+        <div className="mb-1.5 flex items-center justify-between text-[9px] font-bold uppercase tracking-[.1em] text-white/55">
+          <span className="flex items-center gap-1"><Gauge size={10} /> Prędkość lotu</span>
+          <span className="font-mono text-[#ffd455]">{moveSpeed}</span>
         </div>
-        <input
-          type="range"
-          min="5"
-          max="200"
-          step="5"
-          value={moveSpeed}
-          onChange={(event) => updateMoveSpeed(Number(event.target.value))}
-          className="h-1.5 w-full cursor-pointer accent-[#f3ad00]"
-          aria-label="Prędkość poruszania się"
-        />
-        <div className="my-3 h-px bg-white/8" />
-        <div className="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-[.14em] text-white/55">
-          <span className="flex items-center gap-1.5"><Focus size={11} /> Pole widzenia</span>
-          <span className="flex items-center gap-2">
-            <span className="font-mono text-[#ffd455]">{cameraFov}°</span>
-            <button type="button" onClick={() => updateCameraFov(75)} className="rounded border border-white/10 p-1 text-white/35 hover:bg-white/10 hover:text-white" aria-label="Resetuj pole widzenia" title="Resetuj"><RotateCcw size={9} /></button>
-          </span>
+        <div className="h-1 overflow-hidden bg-white/10">
+          <div className="h-full bg-[#f3ad00] transition-[width] duration-150" style={{ width: `${((moveSpeed - 5) / 195) * 100}%` }} />
         </div>
-        <input
-          type="range"
-          min="40"
-          max="110"
-          step="1"
-          value={cameraFov}
-          onChange={(event) => updateCameraFov(Number(event.target.value))}
-          className="h-1.5 w-full cursor-pointer accent-[#f3ad00]"
-          aria-label="Pole widzenia kamery"
-        />
-        <div className="my-3 h-px bg-white/8" />
-        <div className="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-[.14em] text-white/55">
-          <span className="flex items-center gap-1.5"><MousePointer2 size={11} /> Czułość myszy</span>
-          <span className="flex items-center gap-2">
-            <span className="font-mono text-[#ffd455]">{(mouseSensitivity / 6).toFixed(1)}×</span>
-            <button type="button" onClick={() => updateMouseSensitivity(6)} className="rounded border border-white/10 p-1 text-white/35 hover:bg-white/10 hover:text-white" aria-label="Resetuj czułość myszy" title="Resetuj"><RotateCcw size={9} /></button>
-          </span>
-        </div>
-        <input
-          type="range"
-          min="1"
-          max="12"
-          step="1"
-          value={mouseSensitivity}
-          onChange={(event) => updateMouseSensitivity(Number(event.target.value))}
-          className="h-1.5 w-full cursor-pointer accent-[#f3ad00]"
-          aria-label="Czułość sterowania myszą"
-        />
-        <button
-          type="button"
-          onClick={() => void createCameraSnapshot()}
-          className="mt-3 inline-flex w-fit items-center rounded border border-[#f3ad00]/35 bg-[#f3ad00]/10 px-1.5 py-1 text-[8px] font-bold leading-none text-[#ffd455] transition hover:bg-[#f3ad00]/20 hover:text-white"
-        >
-          <ClipboardCopy size={10} className="mr-1" />
-          {snapshotCopied ? 'Skopiowano' : 'Kopiuj widok'}
-        </button>
-        <p className="mt-2 text-[9px] text-white/35">
-          {dragging ? 'Przeciągaj, aby się rozglądać' : 'LPM: rozglądanie · WASD · Q/E · Shift ×2'}
-        </p>
       </div>
     </>
   )

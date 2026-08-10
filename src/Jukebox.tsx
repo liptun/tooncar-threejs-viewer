@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Music2, Pause, Play, Volume2 } from 'lucide-react'
+import { Pause, Play, Volume2, VolumeX } from 'lucide-react'
 
 type Props = {
   musicUrl: string
@@ -35,20 +35,18 @@ export function Jukebox({ musicUrl }: Props) {
   }
 
   return (
-    <div className="border-b border-[#7892e4]/15 pb-4 max-md:border-0 max-md:pb-3">
+    <div className="pointer-events-auto absolute bottom-4 right-4 z-30 flex items-end gap-2">
       <audio ref={audioRef} src={musicUrl} loop preload="none" />
-      <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.16em] text-[#ffd455] max-md:justify-center">
-        <Music2 size={13} />
-        <span className="max-md:hidden">Muzyka trasy</span>
-      </div>
-      <div className="flex items-center gap-2 max-md:flex-col">
-        <button type="button" onClick={togglePlayback} className="grid size-8 cursor-pointer place-items-center bg-[#f3ad00] text-[#10162d] transition hover:bg-[#ffd455]" aria-label={playing ? 'Wstrzymaj muzykę' : 'Odtwórz muzykę'}>
-          {playing ? <Pause size={14} fill="currentColor" /> : <Play size={14} fill="currentColor" />}
-        </button>
-        <div className="flex min-w-0 flex-1 items-center gap-1.5 max-md:hidden">
-          <Volume2 size={12} className="shrink-0 text-white/35" />
-          <input type="range" min="0" max="1" step="0.05" value={volume} onChange={(event) => setVolume(Number(event.target.value))} className="h-1 w-full cursor-pointer accent-[#f3ad00]" aria-label="Głośność muzyki" />
+      <button type="button" onClick={togglePlayback} className="grid size-10 cursor-pointer place-items-center rounded-xl border border-white/10 bg-black/25 text-white/65 shadow-lg backdrop-blur-sm transition hover:bg-white/10 hover:text-white" aria-label={playing ? 'Wstrzymaj muzykę' : 'Odtwórz muzykę'}>
+        {playing ? <Pause size={14} fill="currentColor" /> : <Play size={14} className="ml-0.5" fill="currentColor" />}
+      </button>
+      <div className="group relative">
+        <div className="pointer-events-none absolute bottom-10 left-0 flex h-24 w-10 items-center justify-center opacity-0 transition-opacity duration-200 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
+          <input type="range" min="0" max="1" step="0.05" value={volume} onChange={(event) => setVolume(Number(event.target.value))} className="h-20 w-4 cursor-pointer accent-[#f3ad00] [direction:rtl] [writing-mode:vertical-lr]" aria-label="Głośność muzyki" />
         </div>
+        <button type="button" onClick={() => setVolume((current) => current > 0 ? 0 : 0.55)} className="grid size-10 cursor-pointer place-items-center rounded-xl border border-white/10 bg-black/25 text-white/65 shadow-lg backdrop-blur-sm transition hover:bg-white/10 hover:text-white" aria-label={volume > 0 ? 'Wycisz muzykę' : 'Włącz dźwięk'}>
+          {volume > 0 ? <Volume2 size={16} /> : <VolumeX size={16} />}
+        </button>
       </div>
     </div>
   )

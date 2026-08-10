@@ -1,7 +1,7 @@
 export type Track = {
   id: string
   name: string
-  world: string
+  originalName: string
   modelUrl: string
   thumbnailUrl: string
   musicUrl: string
@@ -17,11 +17,13 @@ export type Track = {
 }
 
 // Kolejne trasy wystarczy dopisać tutaj i umieścić ich pliki w public/tracks/.
-export const tracks: Track[] = [
+const trackOrder = ['venus', 'luna', 'vegas', 'sahara', 'atolon', 'amazonia', 'castilla', 'japon', 'alaska']
+
+export const tracks = ([
   {
     id: 'luna',
-    name: 'Luna',
-    world: 'Trasa księżycowa',
+    name: 'Księżyc',
+    originalName: 'Luna',
     modelUrl: '/tracks/luna/Luna.glb',
     thumbnailUrl: '/tracks/luna/thumbnail.jpg',
     musicUrl: '/music/Track00.mp3',
@@ -36,15 +38,15 @@ export const tracks: Track[] = [
   },
   {
     id: 'venus',
-    name: 'Venus',
-    world: 'Trasa na Wenus',
+    name: 'Wenus',
+    originalName: 'Venus',
     modelUrl: '/tracks/venus/Venus.glb',
     thumbnailUrl: '/tracks/venus/thumbnail.jpg',
     musicUrl: '/music/Track05.mp3',
     runtimeUrl: '/tracks/venus/runtime.json',
     cameraStart: {
-      position: [15.421, -9.5223, -12.0369],
-      rotation: [0.140163, 8.315398, 0],
+      position: [1.5645, -4.8094, -21.5831],
+      rotation: [0.110163, 8.639398, 0],
       fov: 75,
     },
     accent: '#c56cff',
@@ -53,7 +55,7 @@ export const tracks: Track[] = [
   {
     id: 'alaska',
     name: 'Alaska',
-    world: 'Lodowa trasa',
+    originalName: 'Alaska',
     modelUrl: '/tracks/alaska/Alaska.glb',
     thumbnailUrl: '/tracks/alaska/thumbnail.jpg',
     musicUrl: '/music/Track00.mp3',
@@ -69,7 +71,7 @@ export const tracks: Track[] = [
   {
     id: 'amazonia',
     name: 'Amazonia',
-    world: 'Trasa w dżungli',
+    originalName: 'Amazonia',
     modelUrl: '/tracks/amazonia/Amazonia.glb',
     thumbnailUrl: '/tracks/amazonia/thumbnail.jpg',
     musicUrl: '/music/Track01.mp3',
@@ -84,8 +86,8 @@ export const tracks: Track[] = [
   },
   {
     id: 'atolon',
-    name: 'Atolon',
-    world: 'Trasa wyspowa',
+    name: 'Atol',
+    originalName: 'Atolon',
     modelUrl: '/tracks/atolon/Atolon.glb',
     thumbnailUrl: '/tracks/atolon/thumbnail.jpg',
     musicUrl: '/music/Track02.mp3',
@@ -100,8 +102,8 @@ export const tracks: Track[] = [
   },
   {
     id: 'castilla',
-    name: 'Castilla',
-    world: 'Trasa zamkowa',
+    name: 'Kastylia',
+    originalName: 'Castilla',
     modelUrl: '/tracks/castilla/Castilla.glb',
     thumbnailUrl: '/tracks/castilla/thumbnail.jpg',
     musicUrl: '/music/Track03.mp3',
@@ -116,8 +118,8 @@ export const tracks: Track[] = [
   },
   {
     id: 'japon',
-    name: 'Japon',
-    world: 'Trasa kwitnącej wiśni',
+    name: 'Japonia',
+    originalName: 'Japon',
     modelUrl: '/tracks/japon/Japon.glb',
     thumbnailUrl: '/tracks/japon/thumbnail.jpg',
     musicUrl: '/music/Track05.mp3',
@@ -133,7 +135,7 @@ export const tracks: Track[] = [
   {
     id: 'sahara',
     name: 'Sahara',
-    world: 'Trasa pustynna',
+    originalName: 'Sahara',
     modelUrl: '/tracks/sahara/Sahara.glb',
     thumbnailUrl: '/tracks/sahara/thumbnail.jpg',
     musicUrl: '/music/Track01.mp3',
@@ -148,8 +150,8 @@ export const tracks: Track[] = [
   },
   {
     id: 'vegas',
-    name: 'Vegas',
-    world: 'Trasa neonowa',
+    name: 'Las Vegas',
+    originalName: 'Vegas',
     modelUrl: '/tracks/vegas/Vegas.glb',
     thumbnailUrl: '/tracks/vegas/thumbnail.jpg',
     musicUrl: '/music/Track03.mp3',
@@ -162,4 +164,4 @@ export const tracks: Track[] = [
     accent: '#ff4fb8',
     available: true,
   },
-]
+] satisfies Track[]).sort((a, b) => trackOrder.indexOf(a.id) - trackOrder.indexOf(b.id))

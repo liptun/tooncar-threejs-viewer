@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom'
-import { ChevronRight, CircleHelp, Map, Maximize, MousePointer2, Sparkles } from 'lucide-react'
+import { Maximize, Sparkles } from 'lucide-react'
 import { TrackViewer } from './TrackViewer'
 import { Jukebox } from './Jukebox'
 import { tracks } from './tracks'
@@ -11,6 +11,7 @@ function TrackPage() {
   const [progress, setProgress] = useState(0)
   const [ready, setReady] = useState(false)
   const [error, setError] = useState('')
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
   const requestedTrack = tracks.find((item) => item.id === trackId)
   const track = requestedTrack ?? tracks[0]
   const selectedId = track.id
@@ -32,20 +33,23 @@ function TrackPage() {
   if (!requestedTrack) return <Navigate to={`/track/${tracks[0].id}`} replace />
 
   return (
-    <main className="flex h-dvh w-full overflow-hidden bg-[#080b18] text-white">
-      <aside className="z-10 flex w-[300px] shrink-0 flex-col border-r border-[#7892e4]/15 bg-[#10162d]/95 shadow-2xl max-md:w-[108px]">
-        <header className="flex items-center border-b border-[#7892e4]/15 bg-gradient-to-br from-[#202c59]/55 to-transparent px-5 py-3 max-md:justify-center max-md:px-2">
-          <img src="/tooncar-logo.png" alt="ToonCar" className="h-20 w-24 shrink-0 object-contain drop-shadow-[0_0_18px_rgba(243,173,0,.22)] max-md:size-20" />
-          <div className="ml-2 max-md:hidden">
-            <p className="text-[9px] font-bold uppercase tracking-[.24em] text-[#ffd455]">Oryginalne trasy</p>
-            <h1 className="mt-0.5 text-base font-extrabold tracking-tight">Przeglądarka tras</h1>
+    <main className="relative flex h-dvh w-full overflow-hidden bg-[#080b18] text-white">
+      <div
+        onMouseLeave={() => setSidebarCollapsed(true)}
+        className={`fixed inset-y-0 left-0 z-40 w-[340px] transition-transform duration-300 max-md:w-[188px] ${sidebarCollapsed ? 'pointer-events-none -translate-x-full' : 'translate-x-0'}`}
+      >
+        <aside className="h-full w-[260px] overflow-hidden border-r border-[#7892e4]/20 bg-[#10162d]/70 shadow-2xl backdrop-blur-md max-md:w-[108px]">
+        <div className="flex h-full w-[260px] flex-col max-md:w-[108px]">
+        <header className="flex flex-col items-center justify-center border-b border-[#7892e4]/15 bg-gradient-to-br from-[#202c59]/55 to-transparent px-2 py-1 text-center max-md:px-1">
+          <img src="/tooncar-logo.png" alt="ToonCar" className="h-auto w-48 shrink-0 object-contain drop-shadow-[0_0_18px_rgba(243,173,0,.22)] max-md:w-24" />
+          <div className="mb-2 flex w-full items-center gap-2 px-4 max-md:hidden">
+            <span className="h-px flex-1 bg-gradient-to-r from-transparent to-[#f3ad00]/45" />
+            <h1 className="text-[11px] font-black uppercase tracking-[.18em] text-[#ffd455]">Wybierz trasę</h1>
+            <span className="h-px flex-1 bg-gradient-to-l from-transparent to-[#f3ad00]/45" />
           </div>
         </header>
 
-        <section className="flex-1 overflow-y-auto py-6">
-          <div className="mb-3 px-3 text-center md:text-left">
-            <span className="text-[10px] font-bold uppercase tracking-[.2em] text-white/35 max-md:hidden">Wybierz trasę</span>
-          </div>
+        <section className="flex-1 overflow-y-auto">
           <div className="space-y-1">
             {tracks.map((item) => {
               const active = item.id === selectedId
@@ -61,36 +65,44 @@ function TrackPage() {
                   </span>
                   <span className="min-w-0 flex-1 self-center max-md:hidden">
                     <span className={`block truncate text-sm font-bold ${active ? 'text-white' : 'text-white/65'}`}>{item.name}</span>
-                    <span className="mt-0.5 block truncate text-[10px] uppercase tracking-wider text-white/30">{item.world}</span>
+                    <span className="mt-0.5 block truncate text-[10px] uppercase tracking-wider text-white/30">{item.originalName}</span>
                   </span>
-                  <ChevronRight size={15} className={`mr-3 self-center max-md:hidden ${active ? 'text-[#ffd455]' : 'text-white/15'}`} />
                 </button>
               )
             })}
           </div>
         </section>
 
-        <footer className="border-t border-white/8 p-5 max-md:p-3">
-          <Jukebox musicUrl={track.musicUrl} />
-          <div className="mt-4 flex items-center gap-2 text-[11px] text-white/30 max-md:mt-0 max-md:justify-center">
-            <CircleHelp size={14} />
-            <span className="max-md:hidden">Przytrzymaj LPM, aby sterować kamerą</span>
-          </div>
-        </footer>
-      </aside>
+        </div>
+        </aside>
+      </div>
+
+      {sidebarCollapsed && (
+        <>
+          <div
+            className="fixed inset-y-0 left-0 z-[60] w-2"
+            onMouseEnter={() => setSidebarCollapsed(false)}
+            aria-hidden="true"
+          />
+          <button
+            type="button"
+            className="fixed left-0 top-1/2 z-50 flex h-36 w-8 -translate-y-1/2 cursor-pointer flex-col items-center justify-center gap-2 rounded-r-lg border-y border-r border-[#7892e4]/30 bg-[#10162d]/75 text-[#ffd455]/85 shadow-[4px_0_24px_rgba(0,0,0,.3)] backdrop-blur-sm transition hover:bg-[#202c59]/85 hover:text-[#ffd455]"
+            onClick={() => setSidebarCollapsed(false)}
+            aria-label="Pokaż listę tras"
+          >
+            <span className="text-base leading-none">›</span>
+            <span className="text-[9px] font-bold uppercase tracking-[.14em] [writing-mode:vertical-rl]">Wybierz trasę</span>
+          </button>
+        </>
+      )}
 
       <section className="relative min-w-0 flex-1 overflow-hidden bg-[#10151c]">
         <TrackViewer track={track} onProgress={handleProgress} onReady={handleReady} onError={handleError} />
-        <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between bg-gradient-to-b from-black/55 to-transparent p-7 max-sm:p-4">
-          <div>
-            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.24em] text-white/45">
-              <Map size={13} className="text-[#f3ad00]" /> Trasa aktywna
-            </div>
-            <h2 className="mt-2 text-3xl font-black tracking-[-.04em] drop-shadow-lg max-sm:text-2xl">{track.name}</h2>
-            <p className="mt-1 text-xs font-medium uppercase tracking-[.16em] text-white/40">{track.world}</p>
-          </div>
-          <button onClick={() => document.documentElement.requestFullscreen?.()} className="pointer-events-auto grid size-10 place-items-center rounded-xl border border-white/10 bg-black/25 text-white/60 backdrop-blur-md transition hover:bg-white/10 hover:text-white" aria-label="Tryb pełnoekranowy">
-            <Maximize size={17} />
+        <Jukebox musicUrl={track.musicUrl} />
+        <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-end p-7 max-sm:p-4">
+          <button onClick={() => document.documentElement.requestFullscreen?.()} className="group pointer-events-auto flex h-10 w-10 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-black/25 px-2.5 whitespace-nowrap text-white/60 backdrop-blur-md transition-[width,color,background-color] duration-300 hover:w-36 hover:bg-white/10 hover:text-white" aria-label="Tryb pełnoekranowy">
+            <Maximize size={17} className="shrink-0" />
+            <span className="ml-0 max-w-0 overflow-hidden text-[10px] font-bold uppercase tracking-[.08em] opacity-0 transition-[max-width,margin,opacity] duration-300 group-hover:ml-2 group-hover:max-w-24 group-hover:opacity-100">Pełny ekran</span>
           </button>
         </div>
 
@@ -110,13 +122,6 @@ function TrackPage() {
         )}
         {error && <div className="absolute inset-0 grid place-items-center bg-[#0c1015] text-sm text-red-300">{error}</div>}
 
-        {ready && (
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-end bg-gradient-to-t from-black/55 to-transparent p-7 max-sm:p-4">
-            <div className="flex items-center gap-2 text-[10px] font-medium text-white/35 max-sm:hidden">
-              <MousePointer2 size={13} /> Mysz: rozglądanie · WASD: lot · Q/E: dół/góra · Shift: sprint ×2
-            </div>
-          </div>
-        )}
       </section>
     </main>
   )
