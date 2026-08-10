@@ -10,6 +10,7 @@ type Props = {
   onProgress: (progress: number) => void
   onReady: (animations: number) => void
   onError: (message: string) => void
+  onSkyboxReady: () => void
 }
 
 type RuntimeManifest = {
@@ -222,7 +223,7 @@ function readCameraSnapshot() {
   return { position, rotation, fov: Number.isFinite(fov) ? fov : 75 }
 }
 
-export function TrackViewer({ track, onProgress, onReady, onError }: Props) {
+export function TrackViewer({ track, onProgress, onReady, onError, onSkyboxReady }: Props) {
   const [, setSearchParams] = useSearchParams()
   const mountRef = useRef<HTMLDivElement>(null)
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
@@ -282,6 +283,7 @@ export function TrackViewer({ track, onProgress, onReady, onError }: Props) {
     const worldUp = new THREE.Vector3(0, 1, 0)
     const textureAnimators: TextureAnimator[] = []
     const runtimeTextures: THREE.Texture[] = []
+    let runtimeManifest: RuntimeManifest | undefined
     const scene = new THREE.Scene()
     const camera = new THREE.PerspectiveCamera(cameraFovRef.current, 1, 0.1, 10000)
     cameraRef.current = camera
@@ -353,37 +355,53 @@ export function TrackViewer({ track, onProgress, onReady, onError }: Props) {
     window.addEventListener('keyup', onKeyUp)
     window.addEventListener('blur', onWindowBlur)
 
-    if (track.skyboxUrl) {
-      new THREE.TextureLoader().load(track.skyboxUrl, (texture) => {
-        if (disposed) return texture.dispose()
-        texture.mapping = THREE.EquirectangularReflectionMapping
-        texture.colorSpace = THREE.SRGBColorSpace
-        scene.background = texture
-        scene.environment = texture
-      }, undefined, () => onError('Nie udało się wczytać skyboxa.'))
+    const prepareSkybox = async () => {
+      try {
+        if (track.skyboxUrl) {
+          await new Promise<void>((resolve, reject) => {
+            new THREE.TextureLoader().load(track.skyboxUrl!, (texture) => {
+              if (disposed) {
+                texture.dispose()
+                return resolve()
+              }
+              texture.mapping = THREE.EquirectangularReflectionMapping
+              texture.colorSpace = THREE.SRGBColorSpace
+              scene.background = texture
+              scene.environment = texture
+              onSkyboxReady()
+              resolve()
+            }, undefined, reject)
+          })
+        }
+
+        if (!track.runtimeUrl) return
+        runtimeManifest = await loadJson<RuntimeManifest>(track.runtimeUrl)
+        if (!runtimeManifest.skybox) return
+
+        const skyboxUrl = resolveRelativeUrl(track.runtimeUrl, runtimeManifest.skybox)
+        const skybox = await loadJson<SkyboxMetadata>(skyboxUrl)
+        const faceUrl = (face: keyof SkyboxMetadata['faces']) => resolveRelativeUrl(skyboxUrl, skybox.faces[face].file)
+        const cubeTexture = await loadCubeTexture([
+          faceUrl('RT'), faceUrl('LF'), faceUrl('UP'),
+          faceUrl('DN'), faceUrl('FR'), faceUrl('BK'),
+        ], [0, 1, 4, 5])
+        if (disposed) return cubeTexture.dispose()
+        cubeTexture.colorSpace = THREE.SRGBColorSpace
+        runtimeTextures.push(cubeTexture)
+        if (scene.background instanceof THREE.Texture) scene.background.dispose()
+        scene.background = cubeTexture
+        scene.environment = cubeTexture
+        onSkyboxReady()
+      } catch (skyboxError) {
+        console.warn('Nie udało się wczytać skyboxa przed modelem.', skyboxError)
+      }
     }
 
     const setupRuntimeAssets = async (model: THREE.Object3D) => {
       if (!track.runtimeUrl) return
 
       try {
-        const runtime = await loadJson<RuntimeManifest>(track.runtimeUrl)
-
-        if (runtime.skybox) {
-          const skyboxUrl = resolveRelativeUrl(track.runtimeUrl, runtime.skybox)
-          const skybox = await loadJson<SkyboxMetadata>(skyboxUrl)
-          const faceUrl = (face: keyof SkyboxMetadata['faces']) => resolveRelativeUrl(skyboxUrl, skybox.faces[face].file)
-          const cubeTexture = await loadCubeTexture([
-            faceUrl('RT'), faceUrl('LF'), faceUrl('UP'),
-            faceUrl('DN'), faceUrl('FR'), faceUrl('BK'),
-          ], [0, 1, 4, 5])
-          if (disposed) return cubeTexture.dispose()
-          cubeTexture.colorSpace = THREE.SRGBColorSpace
-          runtimeTextures.push(cubeTexture)
-          if (scene.background instanceof THREE.Texture) scene.background.dispose()
-          scene.background = cubeTexture
-          scene.environment = cubeTexture
-        }
+        const runtime = runtimeManifest ?? await loadJson<RuntimeManifest>(track.runtimeUrl)
 
         if (runtime.textureAnimations) {
           const indexUrl = resolveRelativeUrl(track.runtimeUrl, runtime.textureAnimations)
@@ -444,7 +462,7 @@ export function TrackViewer({ track, onProgress, onReady, onError }: Props) {
       }
     }
 
-    new GLTFLoader().load(
+    const loadModel = () => new GLTFLoader().load(
       track.modelUrl,
       (gltf) => {
         if (disposed) return
@@ -490,6 +508,10 @@ export function TrackViewer({ track, onProgress, onReady, onError }: Props) {
       (event) => onProgress(event.total ? Math.round((event.loaded / event.total) * 100) : 0),
       () => onError('Nie udało się wczytać modelu trasy.'),
     )
+
+    void prepareSkybox().finally(() => {
+      if (!disposed) loadModel()
+    })
 
     const resize = () => {
       const { clientWidth, clientHeight } = mount
@@ -562,7 +584,7 @@ export function TrackViewer({ track, onProgress, onReady, onError }: Props) {
       renderer.dispose()
       renderer.domElement.remove()
     }
-  }, [track, onError, onProgress, onReady])
+  }, [track, onError, onProgress, onReady, onSkyboxReady])
 
   return (
     <>

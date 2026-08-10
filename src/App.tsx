@@ -10,6 +10,7 @@ function TrackPage() {
   const navigate = useNavigate()
   const [progress, setProgress] = useState(0)
   const [ready, setReady] = useState(false)
+  const [skyboxReady, setSkyboxReady] = useState(false)
   const [error, setError] = useState('')
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
   const requestedTrack = tracks.find((item) => item.id === trackId)
@@ -17,12 +18,14 @@ function TrackPage() {
   const selectedId = track.id
 
   const handleReady = useCallback(() => setReady(true), [])
+  const handleSkyboxReady = useCallback(() => setSkyboxReady(true), [])
   const handleError = useCallback((message: string) => setError(message), [])
   const handleProgress = useCallback((value: number) => setProgress(value), [])
 
   useEffect(() => {
     setProgress(0)
     setReady(false)
+    setSkyboxReady(false)
     setError('')
   }, [track.id])
 
@@ -97,7 +100,7 @@ function TrackPage() {
       )}
 
       <section className="relative min-w-0 flex-1 overflow-hidden bg-[#10151c]">
-        <TrackViewer track={track} onProgress={handleProgress} onReady={handleReady} onError={handleError} />
+        <TrackViewer track={track} onProgress={handleProgress} onReady={handleReady} onError={handleError} onSkyboxReady={handleSkyboxReady} />
         <Jukebox musicUrl={track.musicUrl} />
         <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-end p-7 max-sm:p-4">
           <button onClick={() => document.documentElement.requestFullscreen?.()} className="group pointer-events-auto flex h-10 w-10 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-black/25 px-2.5 whitespace-nowrap text-white/60 backdrop-blur-md transition-[width,color,background-color] duration-300 hover:w-36 hover:bg-white/10 hover:text-white" aria-label="Tryb pełnoekranowy">
@@ -107,7 +110,7 @@ function TrackPage() {
         </div>
 
         {!ready && !error && (
-          <div className="absolute inset-0 grid place-items-center bg-[#0c1015]">
+          <div className={`absolute inset-0 grid place-items-center transition-colors duration-300 ${skyboxReady ? 'bg-transparent' : 'bg-[#0c1015]'}`}>
             <div className="w-64 text-center">
               <div className="mx-auto mb-5 grid size-12 place-items-center rounded-2xl border border-[#f3ad00]/35 bg-[#f3ad00]/10 text-[#ffd455]">
                 <Sparkles className="animate-pulse" size={22} />
