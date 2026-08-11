@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-ToonCar R3D Code-Guided Unpacker v102
+ToonCar R3D Code-Guided Unpacker
 
 This revision uses loader behavior verified directly in ToonCar.exe.
 
@@ -17,7 +17,7 @@ Confirmed runtime layout at the beginning of track R3D files:
 
 The original executable also contains nested object loaders that conditionally
 load additional 0x30-byte object records, spatial structures, and more meshes.
-Their full semantic graph is not decoded yet, so v102 combines:
+Their full semantic graph is not decoded yet, so the unpacker combines:
   1) exact sequential parsing for confirmed top-level sections
   2) exhaustive signature-based extraction for all additional known mesh and
      texture-bank structures
@@ -41,6 +41,52 @@ import zlib
 import shutil
 import subprocess
 from pathlib import Path
+
+EXPORTER_NAME = "ToonCar R3D Code-Guided Unpacker"
+EXPORTER_VERSION = 104
+EXPORTER_VERSION_LABEL = f"v{EXPORTER_VERSION}"
+EXPORT_DIRECTORY_SUFFIX = f"_unpacked_{EXPORTER_VERSION_LABEL}"
+
+
+def default_export_directory(source_path: Path) -> Path:
+    source_path = Path(source_path)
+    return source_path.parent / f"{source_path.stem}{EXPORT_DIRECTORY_SUFFIX}"
+
+
+def exporter_metadata() -> dict:
+    return {
+        "name": EXPORTER_NAME,
+        "version": EXPORTER_VERSION,
+        "version_label": EXPORTER_VERSION_LABEL,
+        "export_suffix": EXPORT_DIRECTORY_SUFFIX,
+    }
+
+
+def detect_current_user_desktop_path() -> Path:
+    if os.name == "nt":
+        try:
+            import winreg
+
+            key_path = r"Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders"
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path) as key:
+                desktop_value, _ = winreg.QueryValueEx(key, "Desktop")
+            desktop = Path(os.path.expandvars(desktop_value)).expanduser()
+            if desktop.is_dir():
+                return desktop
+        except (OSError, TypeError, ValueError):
+            pass
+
+    home = Path.home()
+    candidates = []
+    one_drive = os.environ.get("OneDrive")
+    if one_drive:
+        candidates.append(Path(one_drive) / "Desktop")
+    candidates.extend([home / "OneDrive" / "Desktop", home / "Desktop"])
+    for candidate in candidates:
+        if candidate.is_dir():
+            return candidate
+
+    return home / "Desktop"
 
 TEXTURE_HEADER_SIZE = 148
 MATERIAL_RECORD_SIZE = 0x60
@@ -829,6 +875,7 @@ def prepare_gltf_runtime_assets(
         "schema": (
             "tooncar-threejs-runtime-v1"
         ),
+        "exporter": exporter_metadata(),
         "source": manifest.get(
             "source",
             {},
@@ -1481,7 +1528,7 @@ def build_exact_main_mesh_mapping(
 
 def write_textured_mtl(path: Path, mapping, texture_bank_dir: str):
     with path.open("w", encoding="utf-8", newline="\n") as m:
-        m.write("# ToonCar R3D Blender material export v102\n")
+        m.write(f"# ToonCar R3D Blender material export {EXPORTER_VERSION_LABEL}\n")
         m.write("# Texture assignment uses ToonCar.exe filename hashes from material record +0x38.\n\n")
 
         for item in mapping:
@@ -1515,7 +1562,7 @@ def export_mesh_obj(data: bytes, mesh, path: Path, scale: float, texture_mapping
                 m.write("Kd 0.8 0.8 0.8\nKs 0 0 0\nillum 1\n\n")
 
     with path.open("w", encoding="utf-8", newline="\n") as f:
-        f.write("# ToonCar R3D Code-Guided Unpacker v102\n")
+        f.write(f"# {EXPORTER_NAME} {EXPORTER_VERSION_LABEL}\n")
         f.write(f"# source_offset=0x{mesh['offset']:X}\n")
         f.write(f"mtllib {mtl_path.name}\n")
         f.write(f"o {path.stem}\n")
@@ -2697,7 +2744,7 @@ def write_props_mtl(
 
     resolved = {}
     with path.open("w", encoding="utf-8", newline="\n") as m:
-        m.write("# ToonCar placed props materials v102\n")
+        m.write(f"# ToonCar placed props materials {EXPORTER_VERSION_LABEL}\n")
         m.write("# Exact game hash: material +0x38 -> texture filename hash\n\n")
 
         for material_id in sorted(material_ids):
@@ -2774,7 +2821,7 @@ def export_placed_props_obj(
     exported_parts = 0
 
     with obj_path.open("w", encoding="utf-8", newline="\n") as f:
-        f.write("# ToonCar R3D placed prop scene v102\n")
+        f.write(f"# ToonCar R3D placed prop scene {EXPORTER_VERSION_LABEL}\n")
         f.write("# Prop positions are baked from the game's 0x44 instance records.\n")
         f.write(f"mtllib {mtl_path.name}\n\n")
 
@@ -3403,7 +3450,7 @@ def export_animated_props_obj(
     exported_templates = []
 
     with obj_path.open("w", encoding="utf-8", newline="\n") as f:
-        f.write("# ToonCar decoded animated prop templates v102\n")
+        f.write(f"# ToonCar decoded animated prop templates {EXPORTER_VERSION_LABEL}\n")
         f.write("# Local ObjectMesh geometry; hierarchy/animation is in JSON.\n")
         f.write(f"mtllib {mtl_path.name}\n\n")
 
@@ -4317,7 +4364,7 @@ def export_simple_objectmesh_asset(
             mtl.write("\n")
 
     with obj_path.open("w", encoding="utf-8", newline="\n") as obj:
-        obj.write("# ToonCar standalone ObjectMesh asset v102\n")
+        obj.write(f"# ToonCar standalone ObjectMesh asset {EXPORTER_VERSION_LABEL}\n")
         obj.write(f"mtllib {mtl_path.name}\n\n")
         obj.write(f"o {safe_asset_name}\n")
 
@@ -4488,7 +4535,7 @@ def export_simple_metadata_object_r3d(
     out = (
         Path(out_path).resolve()
         if out_path
-        else src.parent / f"{src.stem}_unpacked_v102"
+        else default_export_directory(src)
     )
     out.mkdir(parents=True, exist_ok=True)
 
@@ -4542,7 +4589,7 @@ def export_simple_metadata_object_r3d(
             mtl.write("\n")
 
     with obj_path.open("w", encoding="utf-8", newline="\n") as obj:
-        obj.write("# ToonCar Static ObjectMesh asset v102\n")
+        obj.write(f"# ToonCar Static ObjectMesh asset {EXPORTER_VERSION_LABEL}\n")
         obj.write(f"mtllib {mtl_path.name}\n\n")
         obj.write(f"o {safe_name}\n")
 
@@ -4614,7 +4661,7 @@ def export_simple_metadata_object_r3d(
     ]
 
     manifest = {
-        "version": 102,
+        **exporter_metadata(),
         "asset_type": "simple_metadata_object",
         "source": {
             "filename": src.name,
@@ -5019,7 +5066,7 @@ def export_rigged_object_r3d(
     out = (
         Path(out_path).resolve()
         if out_path
-        else src.parent / f"{src.stem}_unpacked_v102"
+        else default_export_directory(src)
     )
     out.mkdir(parents=True, exist_ok=True)
 
@@ -5087,7 +5134,7 @@ def export_rigged_object_r3d(
         newline="\n",
     ) as obj:
         obj.write(
-            "# ToonCar Rigged Object LOD export v102\n"
+            f"# ToonCar Rigged Object LOD export {EXPORTER_VERSION_LABEL}\n"
         )
         obj.write(
             f"mtllib {mtl_path.name}\n\n"
@@ -5291,7 +5338,7 @@ def export_rigged_object_r3d(
         })
 
     manifest = {
-        "version": 102,
+        **exporter_metadata(),
         "asset_type": "rigged_object",
         "source": {
             "filename": src.name,
@@ -5739,7 +5786,7 @@ def export_character_r3d(
     out = (
         Path(out_path).resolve()
         if out_path
-        else src.parent / f"{src.stem}_unpacked_v102"
+        else default_export_directory(src)
     )
     out.mkdir(parents=True, exist_ok=True)
 
@@ -5796,7 +5843,7 @@ def export_character_r3d(
             mtl.write("\n")
 
     with obj_path.open("w", encoding="utf-8", newline="\n") as obj:
-        obj.write("# ToonCar Character LOD export v102\n")
+        obj.write(f"# ToonCar Character LOD export {EXPORTER_VERSION_LABEL}\n")
         obj.write(f"mtllib {mtl_path.name}\n\n")
 
         vertex_base = 0
@@ -5911,7 +5958,7 @@ def export_character_r3d(
         })
 
     manifest = {
-        "version": 102,
+        **exporter_metadata(),
         "asset_type": "character",
         "source": {
             "filename": src.name,
@@ -6245,7 +6292,7 @@ def export_car_r3d(
     out = (
         Path(out_path).resolve()
         if out_path
-        else src.parent / f"{src.stem}_unpacked_v102"
+        else default_export_directory(src)
     )
     out.mkdir(parents=True, exist_ok=True)
 
@@ -6291,7 +6338,7 @@ def export_car_r3d(
             )
 
     with obj_path.open("w", encoding="utf-8", newline="\n") as obj:
-        obj.write("# ToonCar Car ObjectMesh export v102\n")
+        obj.write(f"# ToonCar Car ObjectMesh export {EXPORTER_VERSION_LABEL}\n")
         obj.write(f"mtllib {mtl_path.name}\n\n")
 
         vertex_base = 0
@@ -6402,7 +6449,7 @@ def export_car_r3d(
     ]
 
     manifest = {
-        "version": 102,
+        **exporter_metadata(),
         "asset_type": "car",
         "source": {
             "filename": src.name,
@@ -6545,7 +6592,7 @@ def unpack_standalone_object_r3d(
     out = (
         Path(out_path).resolve()
         if out_path
-        else src.parent / f"{src.stem}_unpacked_v102"
+        else default_export_directory(src)
     )
     out.mkdir(parents=True, exist_ok=True)
 
@@ -6577,7 +6624,7 @@ def unpack_standalone_object_r3d(
     log(f"Tekstury: {details['texture_count']}")
 
     manifest = {
-        "version": 102,
+        **exporter_metadata(),
         "asset_type": "standalone_object",
         "source": {
             "filename": src.name,
@@ -6707,7 +6754,7 @@ def unpack_r3d(
         raise ValueError("Wybierz plik .r3d")
 
     data = src.read_bytes()
-    out = Path(out_path).resolve() if out_path else src.parent / f"{src.stem}_unpacked_v102"
+    out = Path(out_path).resolve() if out_path else default_export_directory(src)
     out.mkdir(parents=True, exist_ok=True)
 
     log(f"Plik: {src.name}")
@@ -7082,8 +7129,8 @@ def unpack_r3d(
         )
 
     manifest = {
-        "format": "ToonCar R3D Code-Guided Unpacker",
-        "version": 102,
+        "format": EXPORTER_NAME,
+        **exporter_metadata(),
         "source": {
             "filename": src.name,
             "size": len(data),
@@ -12227,7 +12274,7 @@ def build_blend_file(
 
 def run_cli():
     ap = argparse.ArgumentParser(
-        description="ToonCar R3D Code-Guided Unpacker v102"
+        description=f"{EXPORTER_NAME} {EXPORTER_VERSION_LABEL}"
     )
     ap.add_argument("file")
     ap.add_argument("--out")
@@ -12630,7 +12677,7 @@ def run_gui():
     import threading
 
     root = tk.Tk()
-    root.title("ToonCar R3D → Blender v102")
+    root.title(f"ToonCar R3D → Blender {EXPORTER_VERSION_LABEL}")
     # Initial width only; final height is calculated from the actual
     # requested size of all widgets after the GUI is constructed.
     root.geometry("1180x700")
@@ -12726,9 +12773,17 @@ def run_gui():
 
     ttk.Label(
         header,
-        text="ToonCar R3D → Blender v102",
+        text="ToonCar R3D → Blender",
         font=("Segoe UI", 15, "bold"),
     ).pack(anchor="w")
+
+    ttk.Label(
+        header,
+        text=(
+            f"Wersja eksportera: {EXPORTER_VERSION_LABEL}  •  "
+            f"sufiks eksportu: {EXPORT_DIRECTORY_SUFFIX}"
+        ),
+    ).pack(anchor="w", pady=(1, 0))
 
     ttk.Label(
         header,
@@ -12762,7 +12817,7 @@ def run_gui():
         if p:
             q = Path(p)
             file_var.set(str(q))
-            out_var.set(str(q.parent / f"{q.stem}_unpacked_v102"))
+            out_var.set(str(default_export_directory(q)))
 
     ttk.Button(
         form,
@@ -12783,12 +12838,30 @@ def run_gui():
         if p:
             out_var.set(p)
 
+    def use_desktop_out():
+        source = file_var.get().strip()
+        if source == "":
+            status_var.set("Najpierw wybierz plik R3D.")
+            return
+
+        desktop = detect_current_user_desktop_path()
+        export_name = f"{Path(source).stem}{EXPORT_DIRECTORY_SUFFIX}"
+        out_var.set(str(desktop / export_name))
+        status_var.set(f"Folder wyjściowy ustawiony na pulpit: {export_name}")
+
     ttk.Button(
         form,
         text="Wybierz…",
         command=choose_out,
         width=12,
     ).grid(row=1, column=2, pady=5)
+
+    ttk.Button(
+        form,
+        text="Pulpit",
+        command=use_desktop_out,
+        width=10,
+    ).grid(row=1, column=3, padx=(6, 0), pady=5)
 
     ttk.Label(form, text="Blender:").grid(
         row=2, column=0, sticky="w", pady=5

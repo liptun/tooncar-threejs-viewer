@@ -149,6 +149,8 @@ Uruchomienie bez argumentów otwiera interfejs graficzny:
 python export_script/r3d_unpacker.pyw
 ```
 
+Domyślnie wynik trafia obok wybranego pliku R3D do katalogu z numerem wersji eksportera, np. `Venus_unpacked_v104`. Przycisk **Pulpit** przy ścieżce eksportu ustawia ten sam katalog bezpośrednio na pulpicie aktualnego użytkownika.
+
 Narzędzie ma również interfejs CLI:
 
 ```bash

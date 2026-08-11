@@ -4,7 +4,11 @@
 > Opisuje stan wiedzy wynikający z analizy plików gry i loaderów w `ToonCar.exe`.
 > Nie jest kompletną specyfikacją formatu R3D.
 
-Stan dokumentu odpowiada eksporterowi **v102**.
+Stan dokumentu odpowiada eksporterowi **v104**.
+
+Od v103 nazwa skryptu jest stała: `r3d_unpacker.pyw`. Wersja jest przechowywana
+w centralnych metadanych `EXPORTER_VERSION`, widoczna w UI i manifestach, a
+domyślny katalog wyniku otrzymuje sufiks `_unpacked_v<version>`.
 
 ## 1. Jak czytać ten dokument
 

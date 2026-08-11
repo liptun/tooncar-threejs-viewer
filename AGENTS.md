@@ -27,6 +27,14 @@ Jeżeli zmiana dotyczy któregokolwiek z poniższych obszarów, **w tej samej zm
 
 Nie kończ zadania dotyczącego eksportera, jeżeli kod i dokumentacja opisują różne wersje formatu.
 
+## Wersjonowanie eksportera
+
+- Nazwa pliku `export_script/r3d_unpacker.pyw` jest stała i nie zawiera wersji.
+- Numer wydania zmieniaj tylko przez `EXPORTER_VERSION` w skrypcie.
+- Nie wpisuj ręcznie `vNNN` w UI, manifestach ani nazwach wynikowych; używaj centralnych stałych i `exporter_metadata()`.
+- Domyślny katalog eksportu musi zachować sufiks `_unpacked_v<version>`.
+- Po zmianie wersji zaktualizuj odpowiadającą jej informację w `docs/r3d-format.md`.
+
 ## Poziomy pewności
 
 W kodzie i dokumentacji rozróżniaj:
