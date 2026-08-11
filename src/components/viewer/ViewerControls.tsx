@@ -12,7 +12,7 @@ export function ViewerControls({ snapshotCopied, onResetCamera, onCreateSnapshot
   return (
     <div
       className={cn(
-        "pointer-events-auto absolute right-7 top-7 z-20",
+        "desktop-ui pointer-events-auto absolute right-7 top-7 z-20",
         "flex items-center justify-end gap-2",
         "max-sm:right-4 max-sm:top-4",
       )}

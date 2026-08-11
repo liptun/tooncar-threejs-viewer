@@ -1,4 +1,6 @@
 import { SpeedIndicator } from "@/components/viewer/SpeedIndicator";
+import { MobileControls } from "@/components/viewer/MobileControls";
+import { TouchViewerControls } from "@/components/viewer/TouchViewerControls";
 import { ViewerControls } from "@/components/viewer/ViewerControls";
 import { useTrackViewer } from "@/hooks/useTrackViewer";
 import type { Track } from "@/tracks";
@@ -26,7 +28,17 @@ export function TrackViewer(props: Props) {
         onResetCamera={viewer.resetCamera}
         onCreateSnapshot={() => void viewer.createCameraSnapshot()}
       />
+      <TouchViewerControls
+        notice={viewer.cameraNotice}
+        onResetCamera={viewer.resetCamera}
+        onCreateSnapshot={() => void viewer.createCameraSnapshot()}
+      />
       <SpeedIndicator speed={viewer.moveSpeed} visible={viewer.showSpeedIndicator} />
+      <MobileControls
+        onMove={viewer.setMobileMove}
+        onLook={viewer.setMobileLook}
+        onVerticalChange={viewer.setMobileVertical}
+      />
     </>
   );
 }

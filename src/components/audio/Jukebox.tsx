@@ -1,18 +1,17 @@
 import { Pause, Play, Volume2, VolumeX } from "lucide-react";
-import { useAudioPlayer } from "@/hooks/useAudioPlayer";
+import type { AudioPlayer } from "@/hooks/useAudioPlayer";
 import { cn } from "@/lib/cn";
 
 type Props = {
   musicUrl: string;
+  player: AudioPlayer;
 };
 
-export function Jukebox({ musicUrl }: Props) {
-  const player = useAudioPlayer(musicUrl);
+export function Jukebox({ musicUrl, player }: Props) {
   const audioFileName = musicUrl.split("/").pop() ?? musicUrl;
 
   return (
-    <div className="pointer-events-auto absolute bottom-4 right-4 z-30 flex items-end gap-2">
-      <audio ref={player.audioRef} src={musicUrl} loop preload="none" />
+    <div className="desktop-ui pointer-events-auto absolute bottom-4 right-4 z-30 flex items-end gap-2">
       <button
         type="button"
         onClick={player.togglePlayback}
