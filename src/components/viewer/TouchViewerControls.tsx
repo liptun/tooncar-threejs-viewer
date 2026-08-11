@@ -7,11 +7,7 @@ type Props = {
   onCreateSnapshot: () => void;
 };
 
-export function TouchViewerControls({
-  notice,
-  onResetCamera,
-  onCreateSnapshot,
-}: Props) {
+export function TouchViewerControls({ notice, onResetCamera, onCreateSnapshot }: Props) {
   return (
     <div className="touch-ui pointer-events-auto absolute right-4 top-4 z-30 items-center gap-2">
       <TouchIconButton

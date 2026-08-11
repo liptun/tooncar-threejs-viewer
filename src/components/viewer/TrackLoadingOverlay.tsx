@@ -1,4 +1,3 @@
-import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 type Props = {
@@ -32,11 +31,15 @@ export function TrackLoadingOverlay({ progress, skyboxReady, error }: Props) {
       <div className="w-64 text-center">
         <div
           className={cn(
-            "mx-auto mb-5 grid size-12 place-items-center rounded-2xl",
-            "border border-primary/35 bg-primary/10 text-primary",
+            "mx-auto mb-5 size-20 overflow-hidden rounded-2xl",
+            "border border-white/10 bg-black/40 shadow-lg",
           )}
         >
-          <Sparkles className="animate-pulse" size={22} />
+          <img
+            src="/tooncar-app-icon.png"
+            alt=""
+            className="size-full animate-pulse object-cover"
+          />
         </div>
         <p className="text-caption font-bold uppercase tracking-display text-white/55">
           Wczytywanie trasy
