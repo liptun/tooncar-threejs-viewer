@@ -11,7 +11,7 @@ export function SpeedIndicator({ speed, visible }: Props) {
     <div
       className={cn(
         "pointer-events-none absolute bottom-3 left-3 z-20 w-44",
-        "bg-[#10162d]/45 px-3 py-2 shadow-[0_8px_24px_rgba(0,0,0,.12)] backdrop-blur-sm",
+        "bg-panel/45 px-3 py-2 shadow-speed backdrop-blur-sm",
         "transition-opacity duration-300",
         visible === true ? "opacity-100" : "opacity-0",
       )}
@@ -20,17 +20,17 @@ export function SpeedIndicator({ speed, visible }: Props) {
       <div
         className={cn(
           "mb-1.5 flex items-center justify-between",
-          "text-[9px] font-bold uppercase tracking-[.1em] text-white/55",
+          "text-ui font-bold uppercase tracking-ui text-white/55",
         )}
       >
         <span className="flex items-center gap-1">
           <Gauge size={10} /> Prędkość lotu
         </span>
-        <span className="font-mono text-[#ffd455]">{speed}</span>
+        <span className="font-mono text-primary">{speed}</span>
       </div>
       <div className="h-1 overflow-hidden bg-white/10">
         <div
-          className="h-full bg-[#f3ad00] transition-[width] duration-150"
+          className="transition-progress h-full bg-primary duration-150"
           style={{ width: `${((speed - 5) / 195) * 100}%` }}
         />
       </div>

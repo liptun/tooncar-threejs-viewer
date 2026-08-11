@@ -20,14 +20,14 @@ export function Jukebox({ musicUrl }: Props) {
           "group flex h-10 w-10 items-center overflow-hidden whitespace-nowrap",
           "cursor-pointer rounded-xl border border-white/10 bg-black/25 p-0",
           "text-white/65 shadow-lg backdrop-blur-sm",
-          "transition-[width,background-color,color] duration-300",
-          "hover:w-36 hover:bg-[#10162d]/90 hover:text-white",
+          "transition-player duration-300",
+          "hover:w-36 hover:bg-panel/90 hover:text-white",
         )}
         aria-label={
           player.playing === true ? `Wstrzymaj ${audioFileName}` : `Odtwórz ${audioFileName}`
         }
       >
-        <span className="grid h-10 w-[38px] shrink-0 place-items-center">
+        <span className="grid h-10 w-player-icon shrink-0 place-items-center">
           {player.playing === true ? (
             <Pause size={14} fill="currentColor" />
           ) : (
@@ -37,9 +37,8 @@ export function Jukebox({ musicUrl }: Props) {
         <span
           className={cn(
             "ml-0 max-w-0 overflow-hidden opacity-0",
-            "font-mono text-[10px] font-bold",
-            "[text-shadow:0_1px_3px_rgba(0,0,0,0.95)]",
-            "transition-[max-width,margin,opacity] duration-300",
+            "font-mono text-ui font-bold",
+            "text-shadow-label transition-label duration-300",
             "group-hover:ml-1 group-hover:max-w-24 group-hover:opacity-100",
           )}
         >
@@ -50,9 +49,9 @@ export function Jukebox({ musicUrl }: Props) {
         className={cn(
           "group flex h-10 w-10 flex-col justify-end overflow-hidden",
           "rounded-xl border border-white/10 bg-black/25 shadow-lg backdrop-blur-sm",
-          "transition-[height,background-color] duration-300",
-          "hover:h-36 hover:bg-[#10162d]/90",
-          "focus-within:h-36 focus-within:bg-[#10162d]/90",
+          "transition-volume duration-300",
+          "hover:h-36 hover:bg-panel/90",
+          "focus-within:h-36 focus-within:bg-panel/90",
         )}
       >
         <div
@@ -70,7 +69,7 @@ export function Jukebox({ musicUrl }: Props) {
             step="0.05"
             value={player.volume}
             onChange={(event) => player.setVolume(Number(event.target.value))}
-            className="h-20 w-4 cursor-pointer accent-[#f3ad00] [direction:rtl] [writing-mode:vertical-lr]"
+            className="slider-vertical h-20 w-4 cursor-pointer accent-primary"
             aria-label="Głośność muzyki"
           />
         </div>

@@ -32,9 +32,7 @@ export function ViewerControls({ snapshotCopied, onResetCamera, onCreateSnapshot
         onClick={onCreateSnapshot}
         aria-label="Skopiuj link do widoku kamery"
         title={snapshotCopied === true ? "Skopiowano link" : "Skopiuj link do widoku"}
-        className={cn(
-          snapshotCopied === true && "border-[#f3ad00]/60 bg-[#f3ad00]/25 text-[#ffd455]",
-        )}
+        className={cn(snapshotCopied === true && "border-primary/60 bg-primary/25 text-primary")}
       />
       <ExpandableIconButton
         icon={<Maximize size={17} />}

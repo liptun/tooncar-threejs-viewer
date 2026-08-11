@@ -17,7 +17,7 @@ export function TrackPage() {
   if (track === undefined) return <Navigate to={`/track/${tracks[0].id}`} replace />;
 
   return (
-    <main className="relative flex h-dvh w-full overflow-hidden bg-[#080b18] text-white">
+    <main className="relative flex h-dvh w-full overflow-hidden bg-base text-white">
       <TrackSidebar
         tracks={tracks}
         selectedTrackId={track.id}
@@ -26,7 +26,7 @@ export function TrackPage() {
         onSelectTrack={(id) => navigate(`/track/${id}`)}
       />
 
-      <section className="relative min-w-0 flex-1 overflow-hidden bg-[#10151c]">
+      <section className="relative min-w-0 flex-1 overflow-hidden bg-base">
         <TrackViewer
           track={track}
           onProgress={loading.handleProgress}

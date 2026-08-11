@@ -2,18 +2,109 @@
 
 @theme {
   --font-sans: "Inter", "Segoe UI", system-ui, sans-serif;
+
+  --color-base: #080b18;
+  --color-panel: #10162d;
+  --color-primary: #f3ad00;
+
+  --text-ui: 0.625rem;
+  --text-caption: 0.75rem;
+  --text-body: 0.875rem;
+
+  --tracking-ui: 0.1em;
+  --tracking-display: 0.18em;
+
+  --spacing-sidebar: 16.25rem;
+  --spacing-sidebar-hover-zone: 21.25rem;
+  --spacing-sidebar-compact: 6.75rem;
+  --spacing-sidebar-hover-zone-compact: 11.75rem;
+  --spacing-player-icon: 2.375rem;
+
+  --z-index-edge-trigger: 60;
+  --shadow-speed: 0 8px 24px rgb(0 0 0 / 0.12);
+  --drop-shadow-logo: 0 0 18px rgb(243 173 0 / 0.22);
 }
 
-* { box-sizing: border-box; }
-html, body, #root { width: 100%; height: 100%; margin: 0; }
-body { background: #080b18; font-family: var(--font-sans); }
-button { font: inherit; }
-canvas { display: block; width: 100%; height: 100%; outline: none; }
+@utility text-shadow-label {
+  text-shadow: 0 1px 3px rgb(0 0 0 / 0.95);
+}
 
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 999px; }
+@utility writing-vertical {
+  writing-mode: vertical-rl;
+}
+
+@utility slider-vertical {
+  direction: rtl;
+  writing-mode: vertical-lr;
+}
+
+@utility transition-control {
+  transition-property: width, color, background-color, border-color;
+}
+
+@utility transition-label {
+  transition-property: max-width, margin, opacity;
+}
+
+@utility transition-player {
+  transition-property: width, background-color, color;
+}
+
+@utility transition-volume {
+  transition-property: height, background-color;
+}
+
+@utility transition-progress {
+  transition-property: width;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--color-base);
+  font-family: var(--font-sans);
+}
+
+button {
+  font: inherit;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  outline: none;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(255 255 255 / 0.12);
+  border-radius: 999px;
+}
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
 }

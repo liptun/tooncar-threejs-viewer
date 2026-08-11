@@ -22,24 +22,24 @@ export function TrackSidebar({
       <div
         onMouseLeave={() => onCollapsedChange(true)}
         className={cn(
-          "fixed inset-y-0 left-0 z-40 w-[340px] max-md:w-[188px]",
+          "fixed inset-y-0 left-0 z-40 w-sidebar-hover-zone max-md:w-sidebar-hover-zone-compact",
           "transition-transform duration-300",
           collapsed === true ? "pointer-events-none -translate-x-full" : "translate-x-0",
         )}
       >
         <aside
           className={cn(
-            "h-full w-[260px] overflow-hidden max-md:w-[108px]",
-            "border-r border-[#7892e4]/20 bg-[#10162d]/70",
+            "h-full w-sidebar overflow-hidden max-md:w-sidebar-compact",
+            "border-r border-white/10 bg-panel/70",
             "shadow-2xl backdrop-blur-md",
           )}
         >
-          <div className="flex h-full w-[260px] flex-col max-md:w-[108px]">
+          <div className="flex h-full w-sidebar flex-col max-md:w-sidebar-compact">
             <header
               className={cn(
                 "flex flex-col items-center justify-center px-2 py-1 text-center max-md:px-1",
-                "border-b border-[#7892e4]/15",
-                "bg-gradient-to-br from-[#202c59]/55 to-transparent",
+                "border-b border-white/10",
+                "bg-linear-to-br from-white/10 to-transparent",
               )}
             >
               <img
@@ -47,15 +47,15 @@ export function TrackSidebar({
                 alt="ToonCar"
                 className={cn(
                   "h-auto w-48 shrink-0 object-contain max-md:w-24",
-                  "drop-shadow-[0_0_18px_rgba(243,173,0,.22)]",
+                  "drop-shadow-logo",
                 )}
               />
               <div className="mb-2 flex w-full items-center gap-2 px-4 max-md:hidden">
-                <span className="h-px flex-1 bg-gradient-to-r from-transparent to-[#f3ad00]/45" />
-                <h1 className="text-[11px] font-black uppercase tracking-[.18em] text-[#ffd455]">
+                <span className="h-px flex-1 bg-linear-to-r from-transparent to-primary/45" />
+                <h1 className="text-ui font-black uppercase tracking-display text-primary">
                   Wybierz trasę
                 </h1>
-                <span className="h-px flex-1 bg-gradient-to-l from-transparent to-[#f3ad00]/45" />
+                <span className="h-px flex-1 bg-linear-to-l from-transparent to-primary/45" />
               </div>
             </header>
 
@@ -72,8 +72,8 @@ export function TrackSidebar({
                         "group relative flex min-h-20 w-full items-stretch gap-2 overflow-hidden",
                         "cursor-pointer border-l-4 p-0 text-left transition-all",
                         active === true
-                          ? "border-l-[#f3ad00] bg-gradient-to-r from-[#f3ad00]/18 to-[#7892e4]/8"
-                          : "border-l-transparent hover:bg-[#7892e4]/8",
+                          ? "border-l-primary bg-linear-to-r from-primary/18 to-transparent"
+                          : "border-l-transparent hover:bg-white/5",
                       )}
                     >
                       <span className="relative w-24 shrink-0 overflow-hidden max-md:w-16">
@@ -86,7 +86,7 @@ export function TrackSidebar({
                       <span className="min-w-0 flex-1 self-center max-md:hidden">
                         <span
                           className={cn(
-                            "block truncate text-sm font-bold",
+                            "block truncate text-body font-bold",
                             active === true ? "text-white" : "text-white/65",
                           )}
                         >
@@ -94,7 +94,7 @@ export function TrackSidebar({
                         </span>
                         <span
                           className={cn(
-                            "mt-0.5 block truncate text-[10px] uppercase",
+                            "mt-0.5 block truncate text-ui uppercase",
                             "tracking-wider text-white/30",
                           )}
                         >
@@ -113,7 +113,7 @@ export function TrackSidebar({
       {collapsed === true && (
         <>
           <div
-            className="fixed inset-y-0 left-0 z-[60] w-2"
+            className="fixed inset-y-0 left-0 z-edge-trigger w-2"
             onMouseEnter={() => onCollapsedChange(false)}
             aria-hidden="true"
           />
@@ -122,7 +122,7 @@ export function TrackSidebar({
             className={cn(
               "fixed left-0 top-1/2 z-50 flex h-36 w-10 -translate-y-1/2",
               "cursor-pointer flex-col items-center justify-center gap-2",
-              "rounded-r-xl border-y border-r border-white/10 bg-[#10162d]/90",
+              "rounded-r-xl border-y border-r border-white/10 bg-panel/90",
               "text-white/70 shadow-lg backdrop-blur-sm transition-colors hover:text-white",
             )}
             onClick={() => onCollapsedChange(false)}
@@ -131,9 +131,8 @@ export function TrackSidebar({
             <ChevronRight size={14} aria-hidden="true" />
             <span
               className={cn(
-                "text-[9px] font-bold uppercase tracking-[.14em]",
-                "[text-shadow:0_1px_3px_rgba(0,0,0,0.95)]",
-                "[writing-mode:vertical-rl]",
+                "text-shadow-label writing-vertical",
+                "text-ui font-bold uppercase tracking-ui",
               )}
             >
               Wybierz trasę
