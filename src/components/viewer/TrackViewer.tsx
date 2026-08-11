@@ -7,6 +7,7 @@ import type { Track } from "@/tracks";
 
 type Props = {
   track: Track;
+  controlsEnabled: boolean;
   onProgress: (progress: number) => void;
   onReady: (animations: number) => void;
   onError: (message: string) => void;
@@ -23,24 +24,33 @@ export function TrackViewer(props: Props) {
         className="absolute inset-0"
         aria-label={`Widok 3D trasy ${props.track.name}`}
       />
-      <ViewerControls
-        enhancedGraphics={viewer.enhancedGraphics}
-        snapshotCopied={viewer.snapshotCopied}
-        onToggleEnhancedGraphics={viewer.toggleEnhancedGraphics}
-        onResetCamera={viewer.resetCamera}
-        onCreateSnapshot={() => void viewer.createCameraSnapshot()}
-      />
-      <TouchViewerControls
-        notice={viewer.cameraNotice}
-        onResetCamera={viewer.resetCamera}
-        onCreateSnapshot={() => void viewer.createCameraSnapshot()}
-      />
-      <SpeedIndicator speed={viewer.moveSpeed} visible={viewer.showSpeedIndicator} />
-      <MobileControls
-        onMove={viewer.setMobileMove}
-        onLook={viewer.setMobileLook}
-        onVerticalChange={viewer.setMobileVertical}
-      />
+      {props.controlsEnabled === true && (
+        <>
+          <ViewerControls
+            copiedCameraLink={viewer.copiedCameraLink}
+            enhancedGraphics={viewer.enhancedGraphics}
+            onToggleEnhancedGraphics={viewer.toggleEnhancedGraphics}
+            onResetCamera={viewer.resetCamera}
+            onCopyInteractiveView={() => void viewer.createCameraSnapshot("interactive")}
+            onCopyStaticView={() => void viewer.createCameraSnapshot("static")}
+          />
+          <TouchViewerControls
+            copiedCameraLink={viewer.copiedCameraLink}
+            enhancedGraphics={viewer.enhancedGraphics}
+            notice={viewer.cameraNotice}
+            onToggleEnhancedGraphics={viewer.toggleEnhancedGraphics}
+            onResetCamera={viewer.resetCamera}
+            onCopyInteractiveView={() => void viewer.createCameraSnapshot("interactive")}
+            onCopyStaticView={() => void viewer.createCameraSnapshot("static")}
+          />
+          <SpeedIndicator speed={viewer.moveSpeed} visible={viewer.showSpeedIndicator} />
+          <MobileControls
+            onMove={viewer.setMobileMove}
+            onLook={viewer.setMobileLook}
+            onVerticalChange={viewer.setMobileVertical}
+          />
+        </>
+      )}
     </>
   );
 }

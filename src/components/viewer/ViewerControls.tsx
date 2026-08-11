@@ -1,21 +1,25 @@
-import { Camera, Maximize, RotateCcw, Sparkles } from "lucide-react";
+import { Image, Maximize, RotateCcw, Video } from "lucide-react";
 import { ExpandableIconButton } from "@/components/common/ExpandableIconButton";
+import { RtxIcon } from "@/components/common/RtxIcon";
+import type { CameraLinkType } from "@/hooks/useTrackViewer";
 import { cn } from "@/lib/cn";
 
 type Props = {
+  copiedCameraLink: CameraLinkType | null;
   enhancedGraphics: boolean;
-  snapshotCopied: boolean;
   onToggleEnhancedGraphics: () => void;
   onResetCamera: () => void;
-  onCreateSnapshot: () => void;
+  onCopyInteractiveView: () => void;
+  onCopyStaticView: () => void;
 };
 
 export function ViewerControls({
+  copiedCameraLink,
   enhancedGraphics,
-  snapshotCopied,
   onToggleEnhancedGraphics,
   onResetCamera,
-  onCreateSnapshot,
+  onCopyInteractiveView,
+  onCopyStaticView,
 }: Props) {
   return (
     <div
@@ -26,13 +30,14 @@ export function ViewerControls({
       )}
     >
       <ExpandableIconButton
-        icon={<Sparkles size={17} />}
-        label={enhancedGraphics === true ? "RTX: ON" : "RTX: OFF"}
+        icon={<RtxIcon enabled={enhancedGraphics} className="h-7 w-9" />}
+        label="Ulepszona grafika"
+        expandedClassName="hover:w-48"
+        labelClassName="group-hover:max-w-32"
         onClick={onToggleEnhancedGraphics}
         aria-pressed={enhancedGraphics}
         aria-label="Przełącz ulepszone cieniowanie"
         title="Ulepszone cieniowanie GTAO"
-        className={cn(enhancedGraphics === true && "border-primary/60 bg-primary/25 text-primary")}
       />
       <ExpandableIconButton
         icon={<RotateCcw size={17} />}
@@ -44,12 +49,26 @@ export function ViewerControls({
         title="Resetuj kamerę"
       />
       <ExpandableIconButton
-        icon={<Camera size={17} />}
-        label={snapshotCopied === true ? "Skopiowano" : "Skopiuj widok"}
-        onClick={onCreateSnapshot}
+        icon={<Video size={17} />}
+        label={copiedCameraLink === "interactive" ? "Skopiowano" : "Skopiuj widok"}
+        onClick={onCopyInteractiveView}
         aria-label="Skopiuj link do widoku kamery"
-        title={snapshotCopied === true ? "Skopiowano link" : "Skopiuj link do widoku"}
-        className={cn(snapshotCopied === true && "border-primary/60 bg-primary/25 text-primary")}
+        title={copiedCameraLink === "interactive" ? "Skopiowano link" : "Skopiuj link do widoku"}
+        className={cn(
+          copiedCameraLink === "interactive" && "border-primary/60 bg-primary/25 text-primary",
+        )}
+      />
+      <ExpandableIconButton
+        icon={<Image size={17} />}
+        label={copiedCameraLink === "static" ? "Skopiowano" : "Skopiuj tło"}
+        onClick={onCopyStaticView}
+        aria-label="Skopiuj link do animowanego tła"
+        title={
+          copiedCameraLink === "static" ? "Skopiowano link" : "Skopiuj link do animowanego tła"
+        }
+        className={cn(
+          copiedCameraLink === "static" && "border-primary/60 bg-primary/25 text-primary",
+        )}
       />
       <ExpandableIconButton
         icon={<Maximize size={17} />}

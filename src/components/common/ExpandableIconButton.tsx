@@ -31,17 +31,19 @@ export function ExpandableIconButton({
       {...buttonProps}
     >
       <span className="grid shrink-0 place-items-center">{icon}</span>
-      <span
-        className={cn(
-          "ml-0 max-w-0 overflow-hidden opacity-0",
-          "text-ui font-bold uppercase tracking-ui",
-          "text-shadow-label transition-label duration-300",
-          "group-hover:ml-2 group-hover:opacity-100",
-          labelClassName,
-        )}
-      >
-        {label}
-      </span>
+      {label.length > 0 && (
+        <span
+          className={cn(
+            "ml-0 max-w-0 overflow-hidden opacity-0",
+            "text-ui font-bold uppercase tracking-ui",
+            "text-shadow-label transition-label duration-300",
+            "group-hover:ml-2 group-hover:opacity-100",
+            labelClassName,
+          )}
+        >
+          {label}
+        </span>
+      )}
     </button>
   );
 }

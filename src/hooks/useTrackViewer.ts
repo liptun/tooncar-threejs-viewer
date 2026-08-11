@@ -27,6 +27,7 @@ import {
 
 type Props = {
   track: Track;
+  controlsEnabled: boolean;
   onProgress: (progress: number) => void;
   onReady: (animations: number) => void;
   onError: (message: string) => void;
@@ -40,6 +41,8 @@ type MobileMovement = {
   lookX: number;
   lookY: number;
 };
+
+export type CameraLinkType = "interactive" | "static";
 
 function getSkyboxHorizonColor(texture: THREE.CubeTexture) {
   const faces = texture.image as Array<
@@ -136,21 +139,30 @@ async function copyTextToClipboard(text: string) {
   return copied;
 }
 
-export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxReady }: Props) {
+export function useTrackViewer({
+  track,
+  controlsEnabled,
+  onProgress,
+  onReady,
+  onError,
+  onSkyboxReady,
+}: Props) {
   const runtimeUrl = `/tracks/${track.id}/runtime.json`;
-  const [, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rtxParameter = searchParams.get("rtx");
+  const initialEnhancedGraphics = rtxParameter === "on";
   const mountRef = useRef<HTMLDivElement>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const [moveSpeed, setMoveSpeed] = useState(60);
   const [showSpeedIndicator, setShowSpeedIndicator] = useState(false);
-  const [snapshotCopied, setSnapshotCopied] = useState(false);
+  const [copiedCameraLink, setCopiedCameraLink] = useState<CameraLinkType | null>(null);
   const [cameraNotice, setCameraNotice] = useState<string | null>(null);
-  const [enhancedGraphics, setEnhancedGraphics] = useState(false);
+  const [enhancedGraphics, setEnhancedGraphics] = useState(initialEnhancedGraphics);
   const speedIndicatorTimeoutRef = useRef<number | null>(null);
   const cameraNoticeTimeoutRef = useRef<number | null>(null);
   const moveSpeedRef = useRef(60);
   const cameraFovRef = useRef(75);
-  const enhancedGraphicsRef = useRef(false);
+  const enhancedGraphicsRef = useRef(initialEnhancedGraphics);
   const applyEnhancedGraphicsRef = useRef<(enabled: boolean) => void>(() => undefined);
   const mobileMovementRef = useRef<MobileMovement>({
     forward: 0,
@@ -183,6 +195,13 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
     });
   }, []);
 
+  useEffect(() => {
+    const enabled = rtxParameter === "on";
+    enhancedGraphicsRef.current = enabled;
+    setEnhancedGraphics(enabled);
+    applyEnhancedGraphicsRef.current(enabled);
+  }, [rtxParameter]);
+
   const updateMoveSpeed = (value: number) => {
     const nextSpeed = THREE.MathUtils.clamp(Math.round(value), 5, 200);
     moveSpeedRef.current = nextSpeed;
@@ -204,7 +223,7 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
     }, 1800);
   };
 
-  const createCameraSnapshot = async () => {
+  const createCameraSnapshot = async (linkType: CameraLinkType) => {
     const camera = cameraRef.current;
     if (camera === null) return;
     const formatPosition = (value: number) => value.toFixed(4);
@@ -216,18 +235,25 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
       [camera.rotation.x, camera.rotation.y, camera.rotation.z].map(formatRotation).join(","),
     );
     params.set("fov", String(Math.round(camera.fov)));
-    setSearchParams(params, { replace: true });
+    if (enhancedGraphicsRef.current === true) params.set("rtx", "on");
+    else params.delete("rtx");
+    if (linkType === "interactive") setSearchParams(params, { replace: true });
 
     const url = new URL(window.location.href);
+    url.pathname = `/${linkType === "static" ? "static" : "track"}/${track.id}`;
     url.search = params.toString();
     const copied = await copyTextToClipboard(url.toString());
     if (copied === true) {
-      setSnapshotCopied(true);
-      showCameraNotice("Skopiowano link do obecnego widoku");
-      window.setTimeout(() => setSnapshotCopied(false), 1800);
+      setCopiedCameraLink(linkType);
+      showCameraNotice(
+        linkType === "static"
+          ? "Skopiowano link do animowanego tła"
+          : "Skopiowano link do obecnego widoku",
+      );
+      window.setTimeout(() => setCopiedCameraLink(null), 1800);
       return;
     }
-    setSnapshotCopied(false);
+    setCopiedCameraLink(null);
   };
 
   const resetCamera = () => {
@@ -396,7 +422,7 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
       pressedKeys.clear();
     };
     const onPointerDown = (event: PointerEvent) => {
-      if (event.button !== 0 || event.pointerType !== "mouse") return;
+      if (controlsEnabled === false || event.button !== 0 || event.pointerType !== "mouse") return;
       renderer.domElement.requestPointerLock();
     };
     const onPointerLockChange = () => {
@@ -404,7 +430,12 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
       renderer.domElement.style.cursor = isDragging === true ? "none" : "grab";
     };
     const onPointerMove = (event: MouseEvent) => {
-      if (isDragging === false || document.pointerLockElement !== renderer.domElement) return;
+      if (
+        controlsEnabled === false ||
+        isDragging === false ||
+        document.pointerLockElement !== renderer.domElement
+      )
+        return;
       const sensitivity = 0.006;
       camera.rotation.y -= event.movementX * sensitivity;
       camera.rotation.x = THREE.MathUtils.clamp(
@@ -416,13 +447,16 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
     const onPointerUp = (event: MouseEvent) => {
       if (event.button === 0) stopDragging();
     };
-    const onContextMenu = (event: MouseEvent) => event.preventDefault();
+    const onContextMenu = (event: MouseEvent) => {
+      if (controlsEnabled === true) event.preventDefault();
+    };
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.target instanceof HTMLInputElement === true) return;
+      if (controlsEnabled === false || event.target instanceof HTMLInputElement === true) return;
       pressedKeys.add(event.code);
     };
     const onKeyUp = (event: KeyboardEvent) => pressedKeys.delete(event.code);
     const onWheel = (event: WheelEvent) => {
+      if (controlsEnabled === false) return;
       event.preventDefault();
       updateMoveSpeed(moveSpeedRef.current + (event.deltaY < 0 ? 5 : -5));
       setShowSpeedIndicator(true);
@@ -780,13 +814,13 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
         lookY: 0,
       };
     };
-  }, [track, onError, onProgress, onReady, onSkyboxReady]);
+  }, [track, controlsEnabled, onError, onProgress, onReady, onSkyboxReady]);
 
   return {
     mountRef,
     moveSpeed,
     showSpeedIndicator,
-    snapshotCopied,
+    copiedCameraLink,
     cameraNotice,
     enhancedGraphics,
     createCameraSnapshot,

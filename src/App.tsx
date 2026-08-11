@@ -9,6 +9,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Navigate to={defaultTrackUrl} replace />} />
       <Route path="/track/:trackId" element={<TrackPage />} />
+      <Route path="/static/:trackId" element={<TrackPage backgroundMode />} />
       <Route path="*" element={<Navigate to={defaultTrackUrl} replace />} />
     </Routes>
   );

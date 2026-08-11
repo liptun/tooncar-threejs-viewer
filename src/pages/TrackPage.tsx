@@ -9,7 +9,11 @@ import { useTrackLoading } from "@/hooks/useTrackLoading";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 import { tracks } from "@/tracks";
 
-export function TrackPage() {
+type Props = {
+  backgroundMode?: boolean;
+};
+
+export function TrackPage({ backgroundMode = false }: Props) {
   const { trackId } = useParams();
   const navigate = useNavigate();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
@@ -21,26 +25,29 @@ export function TrackPage() {
 
   return (
     <main className="relative flex h-dvh w-full overflow-hidden bg-base text-white">
-      <TrackSidebar
-        tracks={tracks}
-        selectedTrackId={track.id}
-        collapsed={sidebarCollapsed}
-        onCollapsedChange={setSidebarCollapsed}
-        onSelectTrack={(id) => navigate(`/track/${id}`)}
-      />
+      {backgroundMode === false && (
+        <TrackSidebar
+          tracks={tracks}
+          selectedTrackId={track.id}
+          collapsed={sidebarCollapsed}
+          onCollapsedChange={setSidebarCollapsed}
+          onSelectTrack={(id) => navigate(`/track/${id}`)}
+        />
+      )}
 
       <section className="relative min-w-0 flex-1 overflow-hidden bg-base">
         <audio ref={player.audioRef} src={track.musicUrl} loop preload="none" />
         <TrackViewer
           track={track}
+          controlsEnabled={backgroundMode === false}
           onProgress={loading.handleProgress}
           onReady={loading.handleReady}
           onError={loading.handleError}
           onSkyboxReady={loading.handleSkyboxReady}
         />
-        <Jukebox musicUrl={track.musicUrl} player={player} />
-        <TouchJukebox player={player} />
-        {loading.ready === false && (
+        {backgroundMode === false && <Jukebox musicUrl={track.musicUrl} player={player} />}
+        {backgroundMode === false && <TouchJukebox player={player} />}
+        {backgroundMode === false && loading.ready === false && (
           <TrackLoadingOverlay
             progress={loading.progress}
             skyboxReady={loading.skyboxReady}
