@@ -55,8 +55,9 @@ export function createIndependentLoopClips(sourceClips: THREE.AnimationClip[]) {
 
       const track = sourceTrack.clone();
       const frameCount = findTrackPeriod(sourceTrack) + 1;
+      const valueCount = frameCount * track.getValueSize();
       track.times = track.times.slice(0, frameCount);
-      track.values = track.values.slice(0, frameCount * track.getValueSize());
+      track.values = track.values.slice(0, valueCount);
 
       const startTime = track.times[0];
       if (startTime !== 0) {

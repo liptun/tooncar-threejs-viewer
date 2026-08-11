@@ -26,13 +26,6 @@ type Props = {
   onSkyboxReady: () => void;
 };
 
-type TransformAnimator = {
-  target: THREE.Object3D;
-  property: "position" | "quaternion" | "scale";
-  duration: number;
-  track: THREE.KeyframeTrack;
-};
-
 type MobileMovement = {
   forward: number;
   sideways: number;
@@ -40,45 +33,6 @@ type MobileMovement = {
   lookX: number;
   lookY: number;
 };
-
-const quaternionFrom = new THREE.Quaternion();
-const quaternionTo = new THREE.Quaternion();
-
-function applyTransformFrame(animator: TransformAnimator, elapsed: number) {
-  const { target, property, duration, track } = animator;
-  const time = elapsed % duration;
-  const times = track.times;
-  const values = track.values;
-  let low = 0;
-  let high = times.length - 1;
-
-  while (low + 1 < high) {
-    const middle = (low + high) >> 1;
-    if (times[middle] <= time) low = middle;
-    else high = middle;
-  }
-
-  const fromIndex = low;
-  const toIndex = Math.min(low + 1, times.length - 1);
-  const interval = times[toIndex] - times[fromIndex];
-  const alpha = interval > 0 ? (time - times[fromIndex]) / interval : 0;
-  const valueSize = track.getValueSize();
-  const fromOffset = fromIndex * valueSize;
-  const toOffset = toIndex * valueSize;
-
-  if (property === "quaternion") {
-    quaternionFrom.fromArray(values, fromOffset);
-    quaternionTo.fromArray(values, toOffset);
-    target.quaternion.slerpQuaternions(quaternionFrom, quaternionTo, alpha);
-    return;
-  }
-
-  target[property].set(
-    THREE.MathUtils.lerp(values[fromOffset], values[toOffset], alpha),
-    THREE.MathUtils.lerp(values[fromOffset + 1], values[toOffset + 1], alpha),
-    THREE.MathUtils.lerp(values[fromOffset + 2], values[toOffset + 2], alpha),
-  );
-}
 
 function readCameraSnapshot() {
   const params = new URLSearchParams(window.location.search);
@@ -231,7 +185,7 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
 
     let disposed = false;
     let frame = 0;
-    const transformAnimators: TransformAnimator[] = [];
+    let mixer: THREE.AnimationMixer | undefined;
     let animationElapsed = 0;
     let baseMoveSpeed = 10;
     const pressedKeys = new Set<string>();
@@ -425,9 +379,7 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
         (gltf) => {
           if (disposed === true) return;
           const model = gltf.scene;
-          const objectsByName = new Map<string, THREE.Object3D>();
           model.traverse((object) => {
-            if (object.name.length > 0) objectsByName.set(object.name, object);
             if (object instanceof THREE.Mesh === true) {
               const sourceMaterials =
                 Array.isArray(object.material) === true ? object.material : [object.material];
@@ -467,30 +419,10 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
           camera.far = radius * 20;
           camera.updateProjectionMatrix();
 
+          mixer = new THREE.AnimationMixer(model);
           const loopClips = createIndependentLoopClips(gltf.animations);
           loopClips.forEach((clip) => {
-            const trackName = clip.tracks[0]?.name ?? "";
-            const propertySeparator = trackName.lastIndexOf(".");
-            const objectName =
-              propertySeparator > 0 ? trackName.slice(0, propertySeparator) : trackName;
-            const animationRoot = objectsByName.get(objectName);
-            if (animationRoot === undefined) return;
-
-            const propertyName =
-              propertySeparator >= 0 ? trackName.slice(propertySeparator + 1) : trackName;
-            if (
-              propertyName !== "position" &&
-              propertyName !== "quaternion" &&
-              propertyName !== "scale"
-            )
-              return;
-            const animationTrack = clip.tracks[0];
-            transformAnimators.push({
-              target: animationRoot,
-              property: propertyName,
-              duration: clip.duration,
-              track: animationTrack,
-            });
+            mixer?.clipAction(clip).setLoop(THREE.LoopRepeat, Infinity).play();
           });
           onProgress(100);
           onReady(loopClips.length);
@@ -523,7 +455,7 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
         camera.updateProjectionMatrix();
       }
       animationElapsed += delta;
-      transformAnimators.forEach((animator) => applyTransformFrame(animator, animationElapsed));
+      mixer?.update(delta);
       if (mobileMovement.lookX !== 0 || mobileMovement.lookY !== 0) {
         const mobileLookSpeed = 3.2;
         camera.rotation.y -= mobileMovement.lookX * mobileLookSpeed * delta;
@@ -584,6 +516,7 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
       window.removeEventListener("blur", onWindowBlur);
+      mixer?.stopAllAction();
       scene.traverse((object) => {
         if (object instanceof THREE.Mesh === true) {
           object.geometry?.dispose();
