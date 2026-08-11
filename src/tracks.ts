@@ -126,6 +126,11 @@ export const tracks: Track[] = [
     modelUrl: "/tracks/japon/Japon.glb",
     thumbnailUrl: "/tracks/japon/thumbnail.jpg",
     musicUrl: "/music/Track05.mp3",
+    lighting: {
+      sunIntensity: 2.4,
+      skyIntensity: 0,
+      environmentIntensity: 0,
+    },
     cameraStart: {
       position: [-5.8153, -3.3664, 37.3004],
       rotation: [-0.069837, -0.348602, 0],
