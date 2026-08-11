@@ -224,6 +224,7 @@ function readCameraSnapshot() {
 }
 
 export function TrackViewer({ track, onProgress, onReady, onError, onSkyboxReady }: Props) {
+  const runtimeUrl = `/tracks/${track.id}/runtime.json`
   const [, setSearchParams] = useSearchParams()
   const mountRef = useRef<HTMLDivElement>(null)
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
@@ -374,28 +375,10 @@ export function TrackViewer({ track, onProgress, onReady, onError, onSkyboxReady
 
     const prepareSkybox = async () => {
       try {
-        if (track.skyboxUrl) {
-          await new Promise<void>((resolve, reject) => {
-            new THREE.TextureLoader().load(track.skyboxUrl!, (texture) => {
-              if (disposed) {
-                texture.dispose()
-                return resolve()
-              }
-              texture.mapping = THREE.EquirectangularReflectionMapping
-              texture.colorSpace = THREE.SRGBColorSpace
-              scene.background = texture
-              scene.environment = texture
-              onSkyboxReady()
-              resolve()
-            }, undefined, reject)
-          })
-        }
-
-        if (!track.runtimeUrl) return
-        runtimeManifest = await loadJson<RuntimeManifest>(track.runtimeUrl)
+        runtimeManifest = await loadJson<RuntimeManifest>(runtimeUrl)
         if (!runtimeManifest.skybox) return
 
-        const skyboxUrl = resolveRelativeUrl(track.runtimeUrl, runtimeManifest.skybox)
+        const skyboxUrl = resolveRelativeUrl(runtimeUrl, runtimeManifest.skybox)
         const skybox = await loadJson<SkyboxMetadata>(skyboxUrl)
         const faceUrl = (face: keyof SkyboxMetadata['faces']) => resolveRelativeUrl(skyboxUrl, skybox.faces[face].file)
         const cubeTexture = await loadCubeTexture([
@@ -415,13 +398,11 @@ export function TrackViewer({ track, onProgress, onReady, onError, onSkyboxReady
     }
 
     const setupRuntimeAssets = async (model: THREE.Object3D) => {
-      if (!track.runtimeUrl) return
-
       try {
-        const runtime = runtimeManifest ?? await loadJson<RuntimeManifest>(track.runtimeUrl)
+        const runtime = runtimeManifest ?? await loadJson<RuntimeManifest>(runtimeUrl)
 
         if (runtime.textureAnimations) {
-          const indexUrl = resolveRelativeUrl(track.runtimeUrl, runtime.textureAnimations)
+          const indexUrl = resolveRelativeUrl(runtimeUrl, runtime.textureAnimations)
           const index = await loadJson<TextureAnimationIndex>(indexUrl)
 
           for (const entry of index.animations) {

@@ -60,8 +60,7 @@ function TrackPage() {
                 <button
                   key={item.id}
                   onClick={() => selectTrack(item.id)}
-                  disabled={!item.available}
-                  className={`group relative flex min-h-20 w-full cursor-pointer items-stretch gap-2 overflow-hidden border-l-4 px-0 py-0 text-left transition-all disabled:cursor-not-allowed disabled:opacity-40 ${active ? 'border-l-[#f3ad00] bg-gradient-to-r from-[#f3ad00]/18 to-[#7892e4]/8' : 'border-l-transparent hover:bg-[#7892e4]/8'}`}
+                  className={`group relative flex min-h-20 w-full cursor-pointer items-stretch gap-2 overflow-hidden border-l-4 px-0 py-0 text-left transition-all ${active ? 'border-l-[#f3ad00] bg-gradient-to-r from-[#f3ad00]/18 to-[#7892e4]/8' : 'border-l-transparent hover:bg-[#7892e4]/8'}`}
                 >
                   <span className="relative w-24 shrink-0 overflow-hidden max-md:w-16">
                     <img src={item.thumbnailUrl} alt="" className="size-full object-cover transition duration-300 group-hover:scale-105" />
