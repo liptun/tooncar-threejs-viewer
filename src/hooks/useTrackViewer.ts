@@ -1,9 +1,22 @@
 import { useEffect, useRef, useState } from 'react'
-import { Camera, Gauge, Maximize, RotateCcw } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
-import type { Track } from './tracks'
+import type { Track } from '../tracks'
+import { createIndependentLoopClips } from '../lib/three/animations'
+import { createUnlitMaterial } from '../lib/three/materials'
+import {
+  drawTextureAnimationFrame,
+  loadCubeTexture,
+  loadImage,
+  loadJson,
+  resolveRelativeUrl,
+  type RuntimeManifest,
+  type SkyboxMetadata,
+  type TextureAnimationIndex,
+  type TextureAnimationMetadata,
+  type TextureAnimator,
+} from '../lib/three/runtimeAssets'
 
 type Props = {
   track: Track
@@ -13,202 +26,50 @@ type Props = {
   onSkyboxReady: () => void
 }
 
-type RuntimeManifest = {
-  textureAnimations?: string
-  skybox?: string
+type TransformAnimator = {
+  target: THREE.Object3D
+  property: 'position' | 'quaternion' | 'scale'
+  duration: number
+  track: THREE.KeyframeTrack
 }
 
-type TextureAnimationIndex = {
-  animations: Array<{ animationIndex: number; metadata: string }>
-}
+const quaternionFrom = new THREE.Quaternion()
+const quaternionTo = new THREE.Quaternion()
 
-type TextureAnimationMetadata = {
-  animationIndex: number
-  materialIndex: number
-  tickRateHz: number
-  cycleTicks: number
-  tickFrames: number[]
-  atlas: { file: string; cellWidth: number; cellHeight: number }
-  frames: Array<{
-    index: number
-    column: number
-    rowTop: number
-    uvOffset: [number, number]
-    uvScale: [number, number]
-  }>
-}
+function applyTransformFrame(animator: TransformAnimator, elapsed: number) {
+  const { target, property, duration, track } = animator
+  const time = elapsed % duration
+  const times = track.times
+  const values = track.values
+  let low = 0
+  let high = times.length - 1
 
-type SkyboxMetadata = {
-  faces: Record<'RT' | 'LF' | 'UP' | 'DN' | 'FR' | 'BK', { file: string }>
-}
+  while (low + 1 < high) {
+    const middle = (low + high) >> 1
+    if (times[middle] <= time) low = middle
+    else high = middle
+  }
 
-type TextureAnimator = {
-  texture: THREE.CanvasTexture
-  context: CanvasRenderingContext2D
-  atlasImage: HTMLImageElement
-  cellWidth: number
-  cellHeight: number
-  currentFrame: number
-  tickRateHz: number
-  cycleTicks: number
-  tickFrames: number[]
-  frames: TextureAnimationMetadata['frames']
-}
-
-type TexturedMaterial = THREE.Material & {
-  map?: THREE.Texture | null
-  alphaMap?: THREE.Texture | null
-  color?: THREE.Color
-  opacity?: number
-  alphaTest?: number
-  vertexColors?: boolean
-}
-
-function createUnlitMaterial(source: THREE.Material) {
-  const material = source as TexturedMaterial
-  const unlit = new THREE.MeshBasicMaterial({
-    name: source.name,
-    map: material.map ?? null,
-    alphaMap: material.alphaMap ?? null,
-    color: material.color?.clone() ?? new THREE.Color(0xffffff),
-    opacity: material.opacity ?? 1,
-    alphaTest: material.alphaTest ?? 0,
-    transparent: source.transparent,
-    side: source.side,
-    vertexColors: material.vertexColors ?? false,
-    depthTest: source.depthTest,
-    depthWrite: source.depthWrite,
-    blending: source.blending,
-  })
-
-  // ToonCar używał tekstur bez wpływu świateł i korekcji ekspozycji.
-  unlit.toneMapped = false
-  unlit.alphaHash = source.alphaHash
-  unlit.polygonOffset = source.polygonOffset
-  unlit.polygonOffsetFactor = source.polygonOffsetFactor
-  unlit.polygonOffsetUnits = source.polygonOffsetUnits
-  return unlit
-}
-
-const ANIMATION_EPSILON = 1e-4
-
-function nearlyEqual(a: number, b: number) {
-  return Math.abs(a - b) <= ANIMATION_EPSILON * Math.max(1, Math.abs(a), Math.abs(b))
-}
-
-function trackFramesEqual(track: THREE.KeyframeTrack, a: number, b: number) {
+  const fromIndex = low
+  const toIndex = Math.min(low + 1, times.length - 1)
+  const interval = times[toIndex] - times[fromIndex]
+  const alpha = interval > 0 ? (time - times[fromIndex]) / interval : 0
   const valueSize = track.getValueSize()
-  for (let component = 0; component < valueSize; component += 1) {
-    if (!nearlyEqual(track.values[a * valueSize + component], track.values[b * valueSize + component])) {
-      return false
-    }
+  const fromOffset = fromIndex * valueSize
+  const toOffset = toIndex * valueSize
+
+  if (property === 'quaternion') {
+    quaternionFrom.fromArray(values, fromOffset)
+    quaternionTo.fromArray(values, toOffset)
+    target.quaternion.slerpQuaternions(quaternionFrom, quaternionTo, alpha)
+    return
   }
-  return true
-}
 
-function isConstantTrack(track: THREE.KeyframeTrack) {
-  for (let frame = 1; frame < track.times.length; frame += 1) {
-    if (!trackFramesEqual(track, 0, frame)) return false
-  }
-  return true
-}
-
-function findTrackPeriod(track: THREE.KeyframeTrack) {
-  const frameCount = track.times.length
-  for (let period = 1; period < frameCount - 1; period += 1) {
-    let repeats = true
-    for (let frame = period; frame < frameCount; frame += 1) {
-      if (!trackFramesEqual(track, frame, frame % period)) {
-        repeats = false
-        break
-      }
-    }
-    if (repeats) return period
-  }
-  return frameCount - 1
-}
-
-function createIndependentLoopClips(sourceClips: THREE.AnimationClip[]) {
-  const clips: THREE.AnimationClip[] = []
-
-  sourceClips.forEach((sourceClip) => {
-    sourceClip.tracks.forEach((sourceTrack, index) => {
-      if (sourceTrack.times.length < 2 || isConstantTrack(sourceTrack)) return
-
-      const period = findTrackPeriod(sourceTrack)
-      const track = sourceTrack.clone()
-      const frameCount = period + 1
-      const valueCount = frameCount * track.getValueSize()
-      track.times = track.times.slice(0, frameCount)
-      track.values = track.values.slice(0, valueCount)
-
-      const startTime = track.times[0]
-      if (startTime !== 0) {
-        for (let frame = 0; frame < track.times.length; frame += 1) track.times[frame] -= startTime
-      }
-
-      const duration = track.times[track.times.length - 1]
-      clips.push(new THREE.AnimationClip(`${sourceClip.name}:${track.name}:${index}`, duration, [track]))
-    })
-  })
-
-  return clips
-}
-
-function resolveRelativeUrl(baseUrl: string, relativeUrl: string) {
-  return new URL(relativeUrl, new URL(baseUrl, window.location.href)).toString()
-}
-
-async function loadJson<T>(url: string) {
-  const response = await fetch(url)
-  if (!response.ok) throw new Error(`HTTP ${response.status}: ${url}`)
-  return response.json() as Promise<T>
-}
-
-function loadImage(url: string) {
-  return new Promise<HTMLImageElement>((resolve, reject) => {
-    const image = new Image()
-    image.onload = () => resolve(image)
-    image.onerror = reject
-    image.src = url
-  })
-}
-
-async function loadCubeTexture(urls: string[], mirroredFaces: number[]) {
-  const images = await Promise.all(urls.map(loadImage))
-  const faces = images.map((image, index) => {
-    if (!mirroredFaces.includes(index)) return image
-    const canvas = document.createElement('canvas')
-    canvas.width = image.naturalWidth
-    canvas.height = image.naturalHeight
-    const context = canvas.getContext('2d')!
-    context.translate(canvas.width, canvas.height)
-    context.scale(-1, -1)
-    context.drawImage(image, 0, 0)
-    return canvas
-  })
-  const texture = new THREE.CubeTexture(faces)
-  texture.needsUpdate = true
-  return texture
-}
-
-function drawTextureAnimationFrame(animator: TextureAnimator, frameIndex: number) {
-  if (frameIndex === animator.currentFrame) return
-  const frame = animator.frames[frameIndex] ?? animator.frames[0]
-  animator.context.clearRect(0, 0, animator.cellWidth, animator.cellHeight)
-  animator.context.drawImage(
-    animator.atlasImage,
-    frame.column * animator.cellWidth,
-    frame.rowTop * animator.cellHeight,
-    animator.cellWidth,
-    animator.cellHeight,
-    0,
-    0,
-    animator.cellWidth,
-    animator.cellHeight,
+  target[property].set(
+    THREE.MathUtils.lerp(values[fromOffset], values[toOffset], alpha),
+    THREE.MathUtils.lerp(values[fromOffset + 1], values[toOffset + 1], alpha),
+    THREE.MathUtils.lerp(values[fromOffset + 2], values[toOffset + 2], alpha),
   )
-  animator.currentFrame = frameIndex
-  animator.texture.needsUpdate = true
 }
 
 function readCameraSnapshot() {
@@ -223,7 +84,7 @@ function readCameraSnapshot() {
   return { position, rotation, fov: Number.isFinite(fov) ? fov : 75 }
 }
 
-export function TrackViewer({ track, onProgress, onReady, onError, onSkyboxReady }: Props) {
+export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxReady }: Props) {
   const runtimeUrl = `/tracks/${track.id}/runtime.json`
   const [, setSearchParams] = useSearchParams()
   const mountRef = useRef<HTMLDivElement>(null)
@@ -291,7 +152,7 @@ export function TrackViewer({ track, onProgress, onReady, onError, onSkyboxReady
 
     let disposed = false
     let frame = 0
-    let mixer: THREE.AnimationMixer | undefined
+    const transformAnimators: TransformAnimator[] = []
     let animationElapsed = 0
     let baseMoveSpeed = 10
     const pressedKeys = new Set<string>()
@@ -465,7 +326,9 @@ export function TrackViewer({ track, onProgress, onReady, onError, onSkyboxReady
       (gltf) => {
         if (disposed) return
         const model = gltf.scene
+        const objectsByName = new Map<string, THREE.Object3D>()
         model.traverse((object) => {
+          if (object.name) objectsByName.set(object.name, object)
           if (object instanceof THREE.Mesh) {
             const sourceMaterials = Array.isArray(object.material) ? object.material : [object.material]
             const unlitMaterials = sourceMaterials.map(createUnlitMaterial)
@@ -497,9 +360,24 @@ export function TrackViewer({ track, onProgress, onReady, onError, onSkyboxReady
         camera.far = radius * 20
         camera.updateProjectionMatrix()
 
-        mixer = new THREE.AnimationMixer(model)
         const loopClips = createIndependentLoopClips(gltf.animations)
-        loopClips.forEach((clip) => mixer!.clipAction(clip).setLoop(THREE.LoopRepeat, Infinity).play())
+        loopClips.forEach((clip) => {
+          const trackName = clip.tracks[0]?.name ?? ''
+          const propertySeparator = trackName.lastIndexOf('.')
+          const objectName = propertySeparator > 0 ? trackName.slice(0, propertySeparator) : trackName
+          const animationRoot = objectsByName.get(objectName)
+          if (!animationRoot) return
+
+          const propertyName = propertySeparator >= 0 ? trackName.slice(propertySeparator + 1) : trackName
+          if (propertyName !== 'position' && propertyName !== 'quaternion' && propertyName !== 'scale') return
+          const animationTrack = clip.tracks[0]
+          transformAnimators.push({
+            target: animationRoot,
+            property: propertyName,
+            duration: clip.duration,
+            track: animationTrack,
+          })
+        })
         onProgress(100)
         onReady(loopClips.length)
       },
@@ -530,7 +408,7 @@ export function TrackViewer({ track, onProgress, onReady, onError, onSkyboxReady
         camera.updateProjectionMatrix()
       }
       animationElapsed += delta
-      mixer?.update(delta)
+      transformAnimators.forEach((animator) => applyTransformFrame(animator, animationElapsed))
       if (pressedKeys.size > 0) {
         const sprintMultiplier = pressedKeys.has('ShiftLeft') || pressedKeys.has('ShiftRight') ? 2 : 1
         const distance = baseMoveSpeed * (moveSpeedRef.current / 50) * sprintMultiplier * delta
@@ -569,7 +447,6 @@ export function TrackViewer({ track, onProgress, onReady, onError, onSkyboxReady
       window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('keyup', onKeyUp)
       window.removeEventListener('blur', onWindowBlur)
-      mixer?.stopAllAction()
       scene.traverse((object) => {
         if (object instanceof THREE.Mesh) {
           object.geometry?.dispose()
@@ -584,32 +461,12 @@ export function TrackViewer({ track, onProgress, onReady, onError, onSkyboxReady
     }
   }, [track, onError, onProgress, onReady, onSkyboxReady])
 
-  return (
-    <>
-      <div ref={mountRef} className="absolute inset-0" aria-label={`Widok 3D trasy ${track.name}`} />
-      <div className="pointer-events-auto absolute right-7 top-7 z-20 flex items-center justify-end gap-2 max-sm:right-4 max-sm:top-4">
-        <button type="button" onClick={resetCamera} className="group flex h-10 w-10 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-black/30 px-2.5 whitespace-nowrap text-white/75 backdrop-blur-sm transition-[width,color,background-color] duration-300 hover:w-40 hover:bg-[#10162d]/90 hover:text-white" aria-label="Resetuj kamerę" title="Resetuj kamerę">
-          <RotateCcw size={17} className="shrink-0" />
-          <span className="ml-0 max-w-0 overflow-hidden text-[10px] font-bold uppercase tracking-[.08em] opacity-0 [text-shadow:0_1px_3px_rgba(0,0,0,.95)] transition-[max-width,margin,opacity] duration-300 group-hover:ml-2 group-hover:max-w-28 group-hover:opacity-100">Resetuj kamerę</span>
-        </button>
-        <button type="button" onClick={() => void createCameraSnapshot()} className={`group flex h-10 w-10 cursor-pointer items-center justify-center overflow-hidden rounded-xl border px-2.5 whitespace-nowrap backdrop-blur-sm transition-[width,color,background-color,border-color] duration-300 hover:w-36 ${snapshotCopied ? 'border-[#f3ad00]/60 bg-[#f3ad00]/25 text-[#ffd455]' : 'border-white/10 bg-black/30 text-white/75 hover:bg-[#10162d]/90 hover:text-white'}`} aria-label="Skopiuj link do widoku kamery" title={snapshotCopied ? 'Skopiowano link' : 'Skopiuj link do widoku'}>
-          <Camera size={17} className="shrink-0" />
-          <span className="ml-0 max-w-0 overflow-hidden text-[10px] font-bold uppercase tracking-[.08em] opacity-0 [text-shadow:0_1px_3px_rgba(0,0,0,.95)] transition-[max-width,margin,opacity] duration-300 group-hover:ml-2 group-hover:max-w-24 group-hover:opacity-100">{snapshotCopied ? 'Skopiowano' : 'Skopiuj widok'}</span>
-        </button>
-        <button type="button" onClick={() => document.documentElement.requestFullscreen?.()} className="group flex h-10 w-10 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-black/30 px-2.5 whitespace-nowrap text-white/75 backdrop-blur-sm transition-[width,color,background-color] duration-300 hover:w-36 hover:bg-[#10162d]/90 hover:text-white" aria-label="Tryb pełnoekranowy" title="Pełny ekran">
-          <Maximize size={17} className="shrink-0" />
-          <span className="ml-0 max-w-0 overflow-hidden text-[10px] font-bold uppercase tracking-[.08em] opacity-0 [text-shadow:0_1px_3px_rgba(0,0,0,.95)] transition-[max-width,margin,opacity] duration-300 group-hover:ml-2 group-hover:max-w-24 group-hover:opacity-100">Pełny ekran</span>
-        </button>
-      </div>
-      <div className={`pointer-events-none absolute bottom-3 left-3 z-20 w-44 bg-[#10162d]/45 px-3 py-2 shadow-[0_8px_24px_rgba(0,0,0,.12)] backdrop-blur-sm transition-opacity duration-300 ${showSpeedIndicator ? 'opacity-100' : 'opacity-0'}`} aria-hidden={!showSpeedIndicator}>
-        <div className="mb-1.5 flex items-center justify-between text-[9px] font-bold uppercase tracking-[.1em] text-white/55">
-          <span className="flex items-center gap-1"><Gauge size={10} /> Prędkość lotu</span>
-          <span className="font-mono text-[#ffd455]">{moveSpeed}</span>
-        </div>
-        <div className="h-1 overflow-hidden bg-white/10">
-          <div className="h-full bg-[#f3ad00] transition-[width] duration-150" style={{ width: `${((moveSpeed - 5) / 195) * 100}%` }} />
-        </div>
-      </div>
-    </>
-  )
+  return {
+    mountRef,
+    moveSpeed,
+    showSpeedIndicator,
+    snapshotCopied,
+    createCameraSnapshot,
+    resetCamera,
+  }
 }
