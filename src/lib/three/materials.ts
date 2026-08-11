@@ -121,6 +121,7 @@ export function createUnlitMaterial(source: THREE.Material, maximumAnisotropy: n
 }
 
 export function createLitMaterial(source: THREE.MeshBasicMaterial) {
+  const usesEmission = source.map?.name.toLowerCase().includes("lgtning") === true;
   const lit = new THREE.MeshLambertMaterial({
     name: source.name,
     map: source.map,
@@ -134,8 +135,12 @@ export function createLitMaterial(source: THREE.MeshBasicMaterial) {
     depthTest: source.depthTest,
     depthWrite: source.depthWrite,
     blending: source.blending,
+    emissive: usesEmission === true ? 0xffffff : 0x000000,
+    emissiveMap: usesEmission === true ? source.map : null,
+    emissiveIntensity: usesEmission === true ? 2.5 : 1,
   });
 
+  lit.userData.tooncarEmission = usesEmission;
   lit.toneMapped = false;
   lit.forceSinglePass = source.forceSinglePass;
   lit.polygonOffset = source.polygonOffset;

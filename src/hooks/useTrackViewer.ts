@@ -342,6 +342,11 @@ export function useTrackViewer({
           if (source === undefined) return;
           material.map = source.map;
           material.alphaMap = source.alphaMap;
+          if (
+            material instanceof THREE.MeshLambertMaterial === true &&
+            material.userData.tooncarEmission === true
+          )
+            material.emissiveMap = source.map;
           material.needsUpdate = true;
         });
         mesh.material = usesArray === true ? target : target[0];
@@ -560,6 +565,11 @@ export function useTrackViewer({
                 )
                   return;
                 material.map = frameTexture;
+                if (
+                  material instanceof THREE.MeshLambertMaterial === true &&
+                  material.userData.tooncarEmission === true
+                )
+                  material.emissiveMap = frameTexture;
                 material.needsUpdate = true;
                 matchedMaterialCount += 1;
               });
