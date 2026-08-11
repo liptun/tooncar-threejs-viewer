@@ -14,7 +14,7 @@ export function TrackPage() {
   const track = tracks.find((item) => item.id === trackId)
   const loading = useTrackLoading(track?.id ?? tracks[0].id)
 
-  if (!track) return <Navigate to={`/track/${tracks[0].id}`} replace />
+  if (track === undefined) return <Navigate to={`/track/${tracks[0].id}`} replace />
 
   return (
     <main className="relative flex h-dvh w-full overflow-hidden bg-[#080b18] text-white">
@@ -35,7 +35,7 @@ export function TrackPage() {
           onSkyboxReady={loading.handleSkyboxReady}
         />
         <Jukebox musicUrl={track.musicUrl} />
-        {!loading.ready && (
+        {loading.ready === false && (
           <TrackLoadingOverlay progress={loading.progress} skyboxReady={loading.skyboxReady} error={loading.error} />
         )}
       </section>

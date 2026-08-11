@@ -14,7 +14,7 @@ export function TrackSidebar({ tracks, selectedTrackId, collapsed, onCollapsedCh
     <>
       <div
         onMouseLeave={() => onCollapsedChange(true)}
-        className={`fixed inset-y-0 left-0 z-40 w-[340px] transition-transform duration-300 max-md:w-[188px] ${collapsed ? 'pointer-events-none -translate-x-full' : 'translate-x-0'}`}
+        className={`fixed inset-y-0 left-0 z-40 w-[340px] transition-transform duration-300 max-md:w-[188px] ${collapsed === true ? 'pointer-events-none -translate-x-full' : 'translate-x-0'}`}
       >
         <aside className="h-full w-[260px] overflow-hidden border-r border-[#7892e4]/20 bg-[#10162d]/70 shadow-2xl backdrop-blur-md max-md:w-[108px]">
           <div className="flex h-full w-[260px] flex-col max-md:w-[108px]">
@@ -36,13 +36,13 @@ export function TrackSidebar({ tracks, selectedTrackId, collapsed, onCollapsedCh
                       key={track.id}
                       type="button"
                       onClick={() => onSelectTrack(track.id)}
-                      className={`group relative flex min-h-20 w-full cursor-pointer items-stretch gap-2 overflow-hidden border-l-4 p-0 text-left transition-all ${active ? 'border-l-[#f3ad00] bg-gradient-to-r from-[#f3ad00]/18 to-[#7892e4]/8' : 'border-l-transparent hover:bg-[#7892e4]/8'}`}
+                      className={`group relative flex min-h-20 w-full cursor-pointer items-stretch gap-2 overflow-hidden border-l-4 p-0 text-left transition-all ${active === true ? 'border-l-[#f3ad00] bg-gradient-to-r from-[#f3ad00]/18 to-[#7892e4]/8' : 'border-l-transparent hover:bg-[#7892e4]/8'}`}
                     >
                       <span className="relative w-24 shrink-0 overflow-hidden max-md:w-16">
                         <img src={track.thumbnailUrl} alt="" className="size-full object-cover transition duration-300 group-hover:scale-105" />
                       </span>
                       <span className="min-w-0 flex-1 self-center max-md:hidden">
-                        <span className={`block truncate text-sm font-bold ${active ? 'text-white' : 'text-white/65'}`}>{track.name}</span>
+                        <span className={`block truncate text-sm font-bold ${active === true ? 'text-white' : 'text-white/65'}`}>{track.name}</span>
                         <span className="mt-0.5 block truncate text-[10px] uppercase tracking-wider text-white/30">{track.originalName}</span>
                       </span>
                     </button>
@@ -54,7 +54,7 @@ export function TrackSidebar({ tracks, selectedTrackId, collapsed, onCollapsedCh
         </aside>
       </div>
 
-      {collapsed && (
+      {collapsed === true && (
         <>
           <div className="fixed inset-y-0 left-0 z-[60] w-2" onMouseEnter={() => onCollapsedChange(false)} aria-hidden="true" />
           <button

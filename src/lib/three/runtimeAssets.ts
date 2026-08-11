@@ -48,7 +48,7 @@ export function resolveRelativeUrl(baseUrl: string, relativeUrl: string) {
 
 export async function loadJson<T>(url: string) {
   const response = await fetch(url)
-  if (!response.ok) throw new Error(`HTTP ${response.status}: ${url}`)
+  if (response.ok === false) throw new Error(`HTTP ${response.status}: ${url}`)
   return response.json() as Promise<T>
 }
 
@@ -64,7 +64,7 @@ export function loadImage(url: string) {
 export async function loadCubeTexture(urls: string[], mirroredFaces: number[]) {
   const images = await Promise.all(urls.map(loadImage))
   const faces = images.map((image, index) => {
-    if (!mirroredFaces.includes(index)) return image
+    if (mirroredFaces.includes(index) === false) return image
     const canvas = document.createElement('canvas')
     canvas.width = image.naturalWidth
     canvas.height = image.naturalHeight

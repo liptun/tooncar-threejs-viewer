@@ -78,10 +78,11 @@ function readCameraSnapshot() {
   const rotation = params.get('r')?.split(',').map(Number)
   const fov = Number(params.get('fov'))
   if (
-    position?.length !== 3 || rotation?.length !== 3 ||
-    !position.every(Number.isFinite) || !rotation.every(Number.isFinite)
+    position === undefined || rotation === undefined ||
+    position.length !== 3 || rotation.length !== 3 ||
+    position.every(Number.isFinite) === false || rotation.every(Number.isFinite) === false
   ) return null
-  return { position, rotation, fov: Number.isFinite(fov) ? fov : 75 }
+  return { position, rotation, fov: Number.isFinite(fov) === true ? fov : 75 }
 }
 
 export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxReady }: Props) {
@@ -109,7 +110,7 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
 
   const createCameraSnapshot = async () => {
     const camera = cameraRef.current
-    if (!camera) return
+    if (camera === null) return
     const formatPosition = (value: number) => value.toFixed(4)
     const formatRotation = (value: number) => value.toFixed(6)
     const params = new URLSearchParams(window.location.search)
@@ -132,7 +133,7 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
   const resetCamera = () => {
     const camera = cameraRef.current
     const initialView = track.cameraStart
-    if (!camera || !initialView) return
+    if (camera === null) return
     camera.position.fromArray(initialView.position)
     camera.rotation.set(initialView.rotation[0], initialView.rotation[1], initialView.rotation[2], 'YXZ')
     cameraFovRef.current = initialView.fov
@@ -148,7 +149,7 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
 
   useEffect(() => {
     const mount = mountRef.current
-    if (!mount) return
+    if (mount === null) return
 
     let disposed = false
     let frame = 0
@@ -192,10 +193,10 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
     }
     const onPointerLockChange = () => {
       isDragging = document.pointerLockElement === renderer.domElement
-      renderer.domElement.style.cursor = isDragging ? 'none' : 'grab'
+      renderer.domElement.style.cursor = isDragging === true ? 'none' : 'grab'
     }
     const onPointerMove = (event: MouseEvent) => {
-      if (!isDragging || document.pointerLockElement !== renderer.domElement) return
+      if (isDragging === false || document.pointerLockElement !== renderer.domElement) return
       const sensitivity = 0.006
       camera.rotation.y -= event.movementX * sensitivity
       camera.rotation.x = THREE.MathUtils.clamp(
@@ -209,7 +210,7 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
     }
     const onContextMenu = (event: MouseEvent) => event.preventDefault()
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.target instanceof HTMLInputElement) return
+      if ((event.target instanceof HTMLInputElement) === true) return
       pressedKeys.add(event.code)
     }
     const onKeyUp = (event: KeyboardEvent) => pressedKeys.delete(event.code)
@@ -237,7 +238,7 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
     const prepareSkybox = async () => {
       try {
         runtimeManifest = await loadJson<RuntimeManifest>(runtimeUrl)
-        if (!runtimeManifest.skybox) return
+        if (runtimeManifest.skybox === undefined || runtimeManifest.skybox.length === 0) return
 
         const skyboxUrl = resolveRelativeUrl(runtimeUrl, runtimeManifest.skybox)
         const skybox = await loadJson<SkyboxMetadata>(skyboxUrl)
@@ -246,10 +247,10 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
           faceUrl('RT'), faceUrl('LF'), faceUrl('UP'),
           faceUrl('DN'), faceUrl('FR'), faceUrl('BK'),
         ], [0, 1, 4, 5])
-        if (disposed) return cubeTexture.dispose()
+        if (disposed === true) return cubeTexture.dispose()
         cubeTexture.colorSpace = THREE.SRGBColorSpace
         runtimeTextures.push(cubeTexture)
-        if (scene.background instanceof THREE.Texture) scene.background.dispose()
+        if ((scene.background instanceof THREE.Texture) === true) scene.background.dispose()
         scene.background = cubeTexture
         scene.environment = cubeTexture
         onSkyboxReady()
@@ -262,7 +263,7 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
       try {
         const runtime = runtimeManifest ?? await loadJson<RuntimeManifest>(runtimeUrl)
 
-        if (runtime.textureAnimations) {
+        if (runtime.textureAnimations !== undefined && runtime.textureAnimations.length > 0) {
           const indexUrl = resolveRelativeUrl(runtimeUrl, runtime.textureAnimations)
           const index = await loadJson<TextureAnimationIndex>(indexUrl)
 
@@ -270,7 +271,7 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
             const metadataUrl = resolveRelativeUrl(indexUrl, entry.metadata)
             const metadata = await loadJson<TextureAnimationMetadata>(metadataUrl)
             const atlasImage = await loadImage(resolveRelativeUrl(metadataUrl, metadata.atlas.file))
-            if (disposed) return
+            if (disposed === true) return
             const canvas = document.createElement('canvas')
             canvas.width = metadata.atlas.cellWidth
             canvas.height = metadata.atlas.cellHeight
@@ -286,19 +287,19 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
             runtimeTextures.push(frameTexture)
 
             const materialName = `mat_${String(metadata.materialIndex).padStart(3, '0')}`
-            let matched = false
+            let matchedMaterialCount = 0
             model.traverse((object) => {
-              if (!(object instanceof THREE.Mesh)) return
-              const materials = Array.isArray(object.material) ? object.material : [object.material]
+              if ((object instanceof THREE.Mesh) === false) return
+              const materials = Array.isArray(object.material) === true ? object.material : [object.material]
               materials.forEach((material) => {
-                if (material.name !== materialName || !(material instanceof THREE.MeshBasicMaterial)) return
+                if (material.name !== materialName || (material instanceof THREE.MeshBasicMaterial) === false) return
                 material.map = frameTexture
                 material.needsUpdate = true
-                matched = true
+                matchedMaterialCount += 1
               })
             })
 
-            if (matched) {
+            if (matchedMaterialCount > 0) {
               const animator: TextureAnimator = {
                 texture: frameTexture,
                 context,
@@ -324,15 +325,15 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
     const loadModel = () => new GLTFLoader().load(
       track.modelUrl,
       (gltf) => {
-        if (disposed) return
+        if (disposed === true) return
         const model = gltf.scene
         const objectsByName = new Map<string, THREE.Object3D>()
         model.traverse((object) => {
-          if (object.name) objectsByName.set(object.name, object)
-          if (object instanceof THREE.Mesh) {
-            const sourceMaterials = Array.isArray(object.material) ? object.material : [object.material]
+          if (object.name.length > 0) objectsByName.set(object.name, object)
+          if ((object instanceof THREE.Mesh) === true) {
+            const sourceMaterials = Array.isArray(object.material) === true ? object.material : [object.material]
             const unlitMaterials = sourceMaterials.map(createUnlitMaterial)
-            object.material = Array.isArray(object.material) ? unlitMaterials : unlitMaterials[0]
+            object.material = Array.isArray(object.material) === true ? unlitMaterials : unlitMaterials[0]
             sourceMaterials.forEach((material) => material.dispose())
             object.castShadow = false
             object.receiveShadow = false
@@ -344,18 +345,17 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
         const box = new THREE.Box3().setFromObject(model)
         const center = box.getCenter(new THREE.Vector3())
         const size = box.getSize(new THREE.Vector3())
-        const radius = Math.max(size.x, size.y, size.z) || 10
+        const largestDimension = Math.max(size.x, size.y, size.z)
+        const radius = largestDimension > 0 ? largestDimension : 10
         baseMoveSpeed = Math.max(radius * 0.15, 1)
         camera.position.copy(center).add(new THREE.Vector3(radius * 0.3, radius * 0.15, radius * 0.3))
         camera.lookAt(center)
         camera.rotation.order = 'YXZ'
         const initialView = readCameraSnapshot() ?? track.cameraStart
-        if (initialView) {
-          camera.position.fromArray(initialView.position)
-          camera.rotation.set(initialView.rotation[0], initialView.rotation[1], initialView.rotation[2], 'YXZ')
-          updateCameraFov(initialView.fov)
-          camera.fov = cameraFovRef.current
-        }
+        camera.position.fromArray(initialView.position)
+        camera.rotation.set(initialView.rotation[0], initialView.rotation[1], initialView.rotation[2], 'YXZ')
+        updateCameraFov(initialView.fov)
+        camera.fov = cameraFovRef.current
         camera.near = Math.max(radius / 1000, 0.1)
         camera.far = radius * 20
         camera.updateProjectionMatrix()
@@ -366,7 +366,7 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
           const propertySeparator = trackName.lastIndexOf('.')
           const objectName = propertySeparator > 0 ? trackName.slice(0, propertySeparator) : trackName
           const animationRoot = objectsByName.get(objectName)
-          if (!animationRoot) return
+          if (animationRoot === undefined) return
 
           const propertyName = propertySeparator >= 0 ? trackName.slice(propertySeparator + 1) : trackName
           if (propertyName !== 'position' && propertyName !== 'quaternion' && propertyName !== 'scale') return
@@ -381,12 +381,12 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
         onProgress(100)
         onReady(loopClips.length)
       },
-      (event) => onProgress(event.total ? Math.round((event.loaded / event.total) * 100) : 0),
+      (event) => onProgress(event.total > 0 ? Math.round((event.loaded / event.total) * 100) : 0),
       () => onError('Nie udało się wczytać modelu trasy.'),
     )
 
     void prepareSkybox().finally(() => {
-      if (!disposed) loadModel()
+      if (disposed === false) loadModel()
     })
 
     const resize = () => {
@@ -410,17 +410,17 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
       animationElapsed += delta
       transformAnimators.forEach((animator) => applyTransformFrame(animator, animationElapsed))
       if (pressedKeys.size > 0) {
-        const sprintMultiplier = pressedKeys.has('ShiftLeft') || pressedKeys.has('ShiftRight') ? 2 : 1
+        const sprintMultiplier = pressedKeys.has('ShiftLeft') === true || pressedKeys.has('ShiftRight') === true ? 2 : 1
         const distance = baseMoveSpeed * (moveSpeedRef.current / 50) * sprintMultiplier * delta
         movement.set(0, 0, 0)
         camera.getWorldDirection(forward)
         right.set(1, 0, 0).applyQuaternion(camera.quaternion)
-        if (pressedKeys.has('KeyW')) movement.add(forward)
-        if (pressedKeys.has('KeyS')) movement.sub(forward)
-        if (pressedKeys.has('KeyA')) movement.sub(right)
-        if (pressedKeys.has('KeyD')) movement.add(right)
-        if (pressedKeys.has('KeyQ')) movement.sub(worldUp)
-        if (pressedKeys.has('KeyE')) movement.add(worldUp)
+        if (pressedKeys.has('KeyW') === true) movement.add(forward)
+        if (pressedKeys.has('KeyS') === true) movement.sub(forward)
+        if (pressedKeys.has('KeyA') === true) movement.sub(right)
+        if (pressedKeys.has('KeyD') === true) movement.add(right)
+        if (pressedKeys.has('KeyQ') === true) movement.sub(worldUp)
+        if (pressedKeys.has('KeyE') === true) movement.add(worldUp)
         if (movement.lengthSq() > 0) camera.position.addScaledVector(movement.normalize(), distance)
       }
       textureAnimators.forEach((animator) => {
@@ -448,13 +448,13 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
       window.removeEventListener('keyup', onKeyUp)
       window.removeEventListener('blur', onWindowBlur)
       scene.traverse((object) => {
-        if (object instanceof THREE.Mesh) {
+        if ((object instanceof THREE.Mesh) === true) {
           object.geometry?.dispose()
-          const materials = Array.isArray(object.material) ? object.material : [object.material]
+          const materials = Array.isArray(object.material) === true ? object.material : [object.material]
           materials.forEach((material) => material.dispose())
         }
       })
-      if (scene.background instanceof THREE.Texture) scene.background.dispose()
+      if ((scene.background instanceof THREE.Texture) === true) scene.background.dispose()
       runtimeTextures.forEach((texture) => texture.dispose())
       renderer.dispose()
       renderer.domElement.remove()

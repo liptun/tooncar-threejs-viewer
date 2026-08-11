@@ -9,14 +9,14 @@ function nearlyEqual(a: number, b: number) {
 function trackFramesEqual(track: THREE.KeyframeTrack, a: number, b: number) {
   const valueSize = track.getValueSize()
   for (let component = 0; component < valueSize; component += 1) {
-    if (!nearlyEqual(track.values[a * valueSize + component], track.values[b * valueSize + component])) return false
+    if (nearlyEqual(track.values[a * valueSize + component], track.values[b * valueSize + component]) === false) return false
   }
   return true
 }
 
 function isConstantTrack(track: THREE.KeyframeTrack) {
   for (let frame = 1; frame < track.times.length; frame += 1) {
-    if (!trackFramesEqual(track, 0, frame)) return false
+    if (trackFramesEqual(track, 0, frame) === false) return false
   }
   return true
 }
@@ -26,16 +26,16 @@ function findTrackPeriod(track: THREE.KeyframeTrack) {
   for (let period = 1; period < frameCount - 1; period += 1) {
     // Okres może się zaczynać tylko od klatki równej pierwszej. Ten szybki
     // test eliminuje kosztowne porównywanie całego ogona dla większości klatek.
-    if (!trackFramesEqual(track, 0, period)) continue
+    if (trackFramesEqual(track, 0, period) === false) continue
 
     let repeats = true
     for (let frame = period; frame < frameCount; frame += 1) {
-      if (!trackFramesEqual(track, frame, frame % period)) {
+      if (trackFramesEqual(track, frame, frame % period) === false) {
         repeats = false
         break
       }
     }
-    if (repeats) return period
+    if (repeats === true) return period
   }
   return frameCount - 1
 }
@@ -45,7 +45,7 @@ export function createIndependentLoopClips(sourceClips: THREE.AnimationClip[]) {
 
   sourceClips.forEach((sourceClip) => {
     sourceClip.tracks.forEach((sourceTrack, index) => {
-      if (sourceTrack.times.length < 2 || isConstantTrack(sourceTrack)) return
+      if (sourceTrack.times.length < 2 || isConstantTrack(sourceTrack) === true) return
 
       const track = sourceTrack.clone()
       const frameCount = findTrackPeriod(sourceTrack) + 1

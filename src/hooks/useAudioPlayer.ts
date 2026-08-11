@@ -9,19 +9,20 @@ export function useAudioPlayer(musicUrl: string) {
 
   useEffect(() => {
     const audio = audioRef.current
-    if (!audio) return
+    if (audio === null) return
     audio.load()
-    if (playing) void audio.play().catch(() => setPlaying(false))
+    if (playing === true) void audio.play().catch(() => setPlaying(false))
   }, [musicUrl])
 
   useEffect(() => {
-    if (audioRef.current) audioRef.current.volume = volume
+    const audio = audioRef.current
+    if (audio !== null) audio.volume = volume
   }, [volume])
 
   const togglePlayback = () => {
     const audio = audioRef.current
-    if (!audio) return
-    if (playing) {
+    if (audio === null) return
+    if (playing === true) {
       audio.pause()
       setPlaying(false)
       return
