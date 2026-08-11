@@ -1,20 +1,20 @@
-import { useState } from 'react'
-import { Navigate, useNavigate, useParams } from 'react-router-dom'
-import { Jukebox } from '../components/audio/Jukebox'
-import { TrackSidebar } from '../components/sidebar/TrackSidebar'
-import { TrackLoadingOverlay } from '../components/viewer/TrackLoadingOverlay'
-import { TrackViewer } from '../components/viewer/TrackViewer'
-import { useTrackLoading } from '../hooks/useTrackLoading'
-import { tracks } from '../tracks'
+import { useState } from "react";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
+import { Jukebox } from "../components/audio/Jukebox";
+import { TrackSidebar } from "../components/sidebar/TrackSidebar";
+import { TrackLoadingOverlay } from "../components/viewer/TrackLoadingOverlay";
+import { TrackViewer } from "../components/viewer/TrackViewer";
+import { useTrackLoading } from "../hooks/useTrackLoading";
+import { tracks } from "../tracks";
 
 export function TrackPage() {
-  const { trackId } = useParams()
-  const navigate = useNavigate()
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
-  const track = tracks.find((item) => item.id === trackId)
-  const loading = useTrackLoading(track?.id ?? tracks[0].id)
+  const { trackId } = useParams();
+  const navigate = useNavigate();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  const track = tracks.find((item) => item.id === trackId);
+  const loading = useTrackLoading(track?.id ?? tracks[0].id);
 
-  if (track === undefined) return <Navigate to={`/track/${tracks[0].id}`} replace />
+  if (track === undefined) return <Navigate to={`/track/${tracks[0].id}`} replace />;
 
   return (
     <main className="relative flex h-dvh w-full overflow-hidden bg-[#080b18] text-white">
@@ -36,9 +36,13 @@ export function TrackPage() {
         />
         <Jukebox musicUrl={track.musicUrl} />
         {loading.ready === false && (
-          <TrackLoadingOverlay progress={loading.progress} skyboxReady={loading.skyboxReady} error={loading.error} />
+          <TrackLoadingOverlay
+            progress={loading.progress}
+            skyboxReady={loading.skyboxReady}
+            error={loading.error}
+          />
         )}
       </section>
     </main>
-  )
+  );
 }

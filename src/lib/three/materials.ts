@@ -1,16 +1,16 @@
-import * as THREE from 'three'
+import * as THREE from "three";
 
 type TexturedMaterial = THREE.Material & {
-  map?: THREE.Texture | null
-  alphaMap?: THREE.Texture | null
-  color?: THREE.Color
-  opacity?: number
-  alphaTest?: number
-  vertexColors?: boolean
-}
+  map?: THREE.Texture | null;
+  alphaMap?: THREE.Texture | null;
+  color?: THREE.Color;
+  opacity?: number;
+  alphaTest?: number;
+  vertexColors?: boolean;
+};
 
 export function createUnlitMaterial(source: THREE.Material) {
-  const material = source as TexturedMaterial
+  const material = source as TexturedMaterial;
   const unlit = new THREE.MeshBasicMaterial({
     name: source.name,
     map: material.map ?? null,
@@ -24,12 +24,12 @@ export function createUnlitMaterial(source: THREE.Material) {
     depthTest: source.depthTest,
     depthWrite: source.depthWrite,
     blending: source.blending,
-  })
+  });
 
-  unlit.toneMapped = false
-  unlit.alphaHash = source.alphaHash
-  unlit.polygonOffset = source.polygonOffset
-  unlit.polygonOffsetFactor = source.polygonOffsetFactor
-  unlit.polygonOffsetUnits = source.polygonOffsetUnits
-  return unlit
+  unlit.toneMapped = false;
+  unlit.alphaHash = source.alphaHash;
+  unlit.polygonOffset = source.polygonOffset;
+  unlit.polygonOffsetFactor = source.polygonOffsetFactor;
+  unlit.polygonOffsetUnits = source.polygonOffsetUnits;
+  return unlit;
 }

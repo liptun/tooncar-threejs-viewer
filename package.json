@@ -6,14 +6,17 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "format": "prettier --write \"**/*.{ts,tsx}\"",
     "preview": "vite preview"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
+    "clsx": "^2.1.1",
     "lucide-react": "latest",
     "react": "latest",
     "react-dom": "latest",
     "react-router-dom": "^7.18.2",
+    "tailwind-merge": "^3.6.0",
     "three": "latest"
   },
   "devDependencies": {
@@ -21,6 +24,7 @@
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "@types/three": "latest",
+    "prettier": "^3.9.6",
     "tailwindcss": "latest",
     "typescript": "latest",
     "vite": "latest"
