@@ -419,13 +419,22 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
           camera.far = radius * 20;
           camera.updateProjectionMatrix();
 
-          mixer = new THREE.AnimationMixer(model);
-          const loopClips = createIndependentLoopClips(gltf.animations);
-          loopClips.forEach((clip) => {
-            mixer?.clipAction(clip).setLoop(THREE.LoopRepeat, Infinity).play();
-          });
-          onProgress(100);
-          onReady(loopClips.length);
+          try {
+            const loopClips = createIndependentLoopClips(gltf.animations);
+            mixer = new THREE.AnimationMixer(model);
+            loopClips.forEach((clip) => {
+              mixer?.clipAction(clip).setLoop(THREE.LoopRepeat, Infinity).play();
+            });
+            onProgress(100);
+            onReady(loopClips.length);
+          } catch (animationError) {
+            console.error(animationError);
+            onError(
+              animationError instanceof Error
+                ? animationError.message
+                : "Nie udało się przygotować animacji trasy.",
+            );
+          }
         },
         (event) => onProgress(event.total > 0 ? Math.round((event.loaded / event.total) * 100) : 0),
         () => onError("Nie udało się wczytać modelu trasy."),
