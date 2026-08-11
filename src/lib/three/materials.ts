@@ -50,8 +50,16 @@ function classifyTextureAlpha(texture: THREE.Texture | null): AlphaMode | null {
   }
 }
 
-export function createUnlitMaterial(source: THREE.Material) {
+function configureTextureFiltering(texture: THREE.Texture | null, maximumAnisotropy: number) {
+  if (texture === null) return;
+  texture.anisotropy = maximumAnisotropy;
+  texture.needsUpdate = true;
+}
+
+export function createUnlitMaterial(source: THREE.Material, maximumAnisotropy: number) {
   const material = source as TexturedMaterial;
+  configureTextureFiltering(material.map ?? null, maximumAnisotropy);
+  configureTextureFiltering(material.alphaMap ?? null, maximumAnisotropy);
   const usesAlpha = source.transparent === true || source.alphaHash === true;
   const detectedAlphaMode = classifyTextureAlpha(material.alphaMap ?? material.map ?? null);
   const alphaMode: AlphaMode =

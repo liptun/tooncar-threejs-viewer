@@ -200,6 +200,7 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
     const camera = new THREE.PerspectiveCamera(cameraFovRef.current, 1, 0.1, 10000);
     cameraRef.current = camera;
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    const maximumAnisotropy = Math.min(renderer.capabilities.getMaxAnisotropy(), 8);
     const maximumPixelRatio = window.matchMedia("(pointer: coarse)").matches === true ? 1.5 : 2;
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, maximumPixelRatio));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -327,9 +328,10 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
             frameTexture.flipY = false;
             frameTexture.wrapS = THREE.RepeatWrapping;
             frameTexture.wrapT = THREE.RepeatWrapping;
-            frameTexture.generateMipmaps = false;
-            frameTexture.minFilter = THREE.LinearFilter;
+            frameTexture.generateMipmaps = true;
+            frameTexture.minFilter = THREE.LinearMipmapLinearFilter;
             frameTexture.magFilter = THREE.LinearFilter;
+            frameTexture.anisotropy = maximumAnisotropy;
             runtimeTextures.push(frameTexture);
 
             const materialName = `mat_${String(metadata.materialIndex).padStart(3, "0")}`;
@@ -383,7 +385,9 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
             if (object instanceof THREE.Mesh === true) {
               const sourceMaterials =
                 Array.isArray(object.material) === true ? object.material : [object.material];
-              const unlitMaterials = sourceMaterials.map(createUnlitMaterial);
+              const unlitMaterials = sourceMaterials.map((material) =>
+                createUnlitMaterial(material, maximumAnisotropy),
+              );
               object.material =
                 Array.isArray(object.material) === true ? unlitMaterials : unlitMaterials[0];
               sourceMaterials.forEach((material) => material.dispose());
