@@ -1,17 +1,28 @@
+import { useRef } from "react";
 import { cn } from "@/lib/cn";
 import type { Track } from "@/tracks";
 
 type Props = {
   track: Track;
   active: boolean;
-  onSelect: (trackId: string) => void;
+  onSelect: (trackId: string, touchscreenInteraction: boolean) => void;
 };
 
 export function TrackListItem({ track, active, onSelect }: Props) {
+  const pointerTypeRef = useRef("");
+
   return (
     <button
       type="button"
-      onClick={() => onSelect(track.id)}
+      onPointerDown={(event) => {
+        pointerTypeRef.current = event.pointerType;
+      }}
+      onClick={() => {
+        const touchscreenInteraction =
+          pointerTypeRef.current === "touch" || pointerTypeRef.current === "pen";
+        pointerTypeRef.current = "";
+        onSelect(track.id, touchscreenInteraction);
+      }}
       className={cn(
         "relative flex min-h-20 w-full items-stretch gap-2 overflow-hidden",
         "cursor-pointer border-l-4 p-0 text-left transition-all",
@@ -20,14 +31,14 @@ export function TrackListItem({ track, active, onSelect }: Props) {
           : "border-l-transparent hover:bg-white/5",
       )}
     >
-      <span className="relative w-24 shrink-0 overflow-hidden max-md:w-16">
+      <span className="relative w-24 shrink-0 overflow-hidden max-md:w-32">
         <img
           src={track.thumbnailUrl}
           alt=""
           className="size-full object-cover transition duration-300"
         />
       </span>
-      <span className="min-w-0 flex-1 self-center max-md:hidden">
+      <span className="min-w-0 flex-1 self-center">
         <span
           className={cn(
             "block truncate text-body font-bold",

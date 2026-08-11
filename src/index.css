@@ -58,6 +58,131 @@
   transition-property: width;
 }
 
+@keyframes snapshot-toast-fade-out {
+  0%,
+  65% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+.snapshot-toast {
+  animation: snapshot-toast-fade-out 1.8s ease-out forwards;
+}
+
+.touch-controls {
+  --joystick-size: clamp(6.5rem, 24dvh, 9rem);
+  --joystick-handle-size: clamp(2.75rem, 9dvh, 3.5rem);
+  --touch-button-size: clamp(2.5rem, 7dvh, 3rem);
+  display: none;
+}
+
+.touch-ui {
+  display: none;
+}
+
+.virtual-joystick {
+  width: var(--joystick-size);
+  height: var(--joystick-size);
+}
+
+.virtual-joystick-handle {
+  width: var(--joystick-handle-size);
+  height: var(--joystick-handle-size);
+}
+
+.touch-control-button {
+  width: var(--touch-button-size);
+  height: var(--touch-button-size);
+}
+
+.touch-vertical-controls {
+  bottom: 1rem;
+  left: 1.25rem;
+  width: var(--joystick-size);
+  justify-content: center;
+}
+
+.touch-sidebar-toggle {
+  top: 50%;
+  height: 9rem;
+}
+
+.touch-sidebar-logo {
+  width: 12rem;
+}
+
+.touch-sidebar-close {
+  display: none;
+}
+
+@media (any-pointer: coarse) {
+  .desktop-ui {
+    display: none;
+  }
+
+  .touch-ui {
+    display: flex;
+  }
+
+  .touch-controls {
+    display: block;
+  }
+
+  .touch-sidebar-toggle {
+    top: 35%;
+    height: 11rem;
+  }
+
+  .touch-sidebar-shell,
+  .touch-sidebar-panel,
+  .touch-sidebar-content {
+    width: 100vw;
+  }
+
+  .touch-sidebar-logo {
+    width: 7rem;
+  }
+
+  .touch-sidebar-close {
+    display: grid;
+  }
+
+  .touch-track-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (any-pointer: coarse) and (orientation: portrait) and (min-width: 48rem) {
+  .touch-sidebar-logo {
+    width: 10rem;
+  }
+}
+
+@media (any-pointer: coarse) and (orientation: landscape) {
+  .touch-sidebar-logo {
+    width: 4rem;
+  }
+
+  .touch-track-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (any-pointer: coarse) and (orientation: landscape) and (min-width: 56rem) {
+  .touch-sidebar-logo {
+    width: 7rem;
+  }
+
+  .touch-track-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 * {
   box-sizing: border-box;
 }

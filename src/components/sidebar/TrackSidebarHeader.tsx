@@ -11,9 +11,9 @@ export function TrackSidebarHeader() {
       <img
         src="/tooncar-logo.png"
         alt="ToonCar"
-        className="h-auto w-48 shrink-0 object-contain drop-shadow-logo max-md:w-24"
+        className="touch-sidebar-logo h-auto shrink-0 object-contain drop-shadow-logo"
       />
-      <div className="mb-2 flex w-full items-center gap-2 px-4 max-md:hidden">
+      <div className="mb-2 flex w-full items-center gap-2 px-4">
         <span className="h-px flex-1 bg-linear-to-r from-transparent to-primary/45" />
         <h1 className="text-ui font-black uppercase tracking-display text-primary">
           Wybierz trasę

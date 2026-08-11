@@ -37,3 +37,5 @@ export function useAudioPlayer(musicUrl: string) {
 
   return { audioRef, playing, volume, setVolume, togglePlayback, toggleMuted };
 }
+
+export type AudioPlayer = ReturnType<typeof useAudioPlayer>;

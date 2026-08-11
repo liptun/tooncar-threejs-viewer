@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { Jukebox } from "@/components/audio/Jukebox";
+import { TouchJukebox } from "@/components/audio/TouchJukebox";
 import { TrackSidebar } from "@/components/sidebar/TrackSidebar";
 import { TrackLoadingOverlay } from "@/components/viewer/TrackLoadingOverlay";
 import { TrackViewer } from "@/components/viewer/TrackViewer";
 import { useTrackLoading } from "@/hooks/useTrackLoading";
+import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 import { tracks } from "@/tracks";
 
 export function TrackPage() {
@@ -13,6 +15,7 @@ export function TrackPage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const track = tracks.find((item) => item.id === trackId);
   const loading = useTrackLoading(track?.id ?? tracks[0].id);
+  const player = useAudioPlayer(track?.musicUrl ?? tracks[0].musicUrl);
 
   if (track === undefined) return <Navigate to={`/track/${tracks[0].id}`} replace />;
 
@@ -27,6 +30,7 @@ export function TrackPage() {
       />
 
       <section className="relative min-w-0 flex-1 overflow-hidden bg-base">
+        <audio ref={player.audioRef} src={track.musicUrl} loop preload="none" />
         <TrackViewer
           track={track}
           onProgress={loading.handleProgress}
@@ -34,7 +38,8 @@ export function TrackPage() {
           onError={loading.handleError}
           onSkyboxReady={loading.handleSkyboxReady}
         />
-        <Jukebox musicUrl={track.musicUrl} />
+        <Jukebox musicUrl={track.musicUrl} player={player} />
+        <TouchJukebox player={player} />
         {loading.ready === false && (
           <TrackLoadingOverlay
             progress={loading.progress}

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
@@ -31,6 +31,14 @@ type TransformAnimator = {
   property: "position" | "quaternion" | "scale";
   duration: number;
   track: THREE.KeyframeTrack;
+};
+
+type MobileMovement = {
+  forward: number;
+  sideways: number;
+  vertical: number;
+  lookX: number;
+  lookY: number;
 };
 
 const quaternionFrom = new THREE.Quaternion();
@@ -89,6 +97,29 @@ function readCameraSnapshot() {
   return { position, rotation, fov: Number.isFinite(fov) === true ? fov : 75 };
 }
 
+async function copyTextToClipboard(text: string) {
+  if (window.isSecureContext === true && navigator.clipboard !== undefined) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // The selection-based fallback below also works on local HTTP addresses.
+    }
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.readOnly = true;
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+  textarea.select();
+  textarea.setSelectionRange(0, text.length);
+  const copied = document.execCommand("copy");
+  textarea.remove();
+  return copied;
+}
+
 export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxReady }: Props) {
   const runtimeUrl = `/tracks/${track.id}/runtime.json`;
   const [, setSearchParams] = useSearchParams();
@@ -97,9 +128,32 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
   const [moveSpeed, setMoveSpeed] = useState(60);
   const [showSpeedIndicator, setShowSpeedIndicator] = useState(false);
   const [snapshotCopied, setSnapshotCopied] = useState(false);
+  const [cameraNotice, setCameraNotice] = useState<string | null>(null);
   const speedIndicatorTimeoutRef = useRef<number | null>(null);
+  const cameraNoticeTimeoutRef = useRef<number | null>(null);
   const moveSpeedRef = useRef(60);
   const cameraFovRef = useRef(75);
+  const mobileMovementRef = useRef<MobileMovement>({
+    forward: 0,
+    sideways: 0,
+    vertical: 0,
+    lookX: 0,
+    lookY: 0,
+  });
+
+  const setMobileMove = useCallback((sideways: number, forward: number) => {
+    mobileMovementRef.current.sideways = sideways;
+    mobileMovementRef.current.forward = forward;
+  }, []);
+
+  const setMobileLook = useCallback((lookX: number, lookY: number) => {
+    mobileMovementRef.current.lookX = lookX;
+    mobileMovementRef.current.lookY = lookY;
+  }, []);
+
+  const setMobileVertical = useCallback((vertical: number) => {
+    mobileMovementRef.current.vertical = vertical;
+  }, []);
 
   const updateMoveSpeed = (value: number) => {
     const nextSpeed = THREE.MathUtils.clamp(Math.round(value), 5, 200);
@@ -110,6 +164,16 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
   const updateCameraFov = (value: number) => {
     const nextFov = THREE.MathUtils.clamp(Math.round(value), 40, 110);
     cameraFovRef.current = nextFov;
+  };
+
+  const showCameraNotice = (message: string) => {
+    if (cameraNoticeTimeoutRef.current !== null)
+      window.clearTimeout(cameraNoticeTimeoutRef.current);
+    setCameraNotice(message);
+    cameraNoticeTimeoutRef.current = window.setTimeout(() => {
+      setCameraNotice(null);
+      cameraNoticeTimeoutRef.current = null;
+    }, 1800);
   };
 
   const createCameraSnapshot = async () => {
@@ -128,13 +192,14 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
 
     const url = new URL(window.location.href);
     url.search = params.toString();
-    try {
-      await navigator.clipboard.writeText(url.toString());
+    const copied = await copyTextToClipboard(url.toString());
+    if (copied === true) {
       setSnapshotCopied(true);
+      showCameraNotice("Skopiowano link do obecnego widoku");
       window.setTimeout(() => setSnapshotCopied(false), 1800);
-    } catch {
-      setSnapshotCopied(false);
+      return;
     }
+    setSnapshotCopied(false);
   };
 
   const resetCamera = () => {
@@ -157,6 +222,7 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
     params.delete("r");
     params.delete("fov");
     setSearchParams(params, { replace: true });
+    showCameraNotice("Przywrócono początkową pozycję kamery");
   };
 
   useEffect(() => {
@@ -180,7 +246,8 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
     const camera = new THREE.PerspectiveCamera(cameraFovRef.current, 1, 0.1, 10000);
     cameraRef.current = camera;
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    const maximumPixelRatio = window.matchMedia("(pointer: coarse)").matches === true ? 1.5 : 2;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, maximumPixelRatio));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1;
@@ -200,7 +267,7 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
       pressedKeys.clear();
     };
     const onPointerDown = (event: PointerEvent) => {
-      if (event.button !== 0) return;
+      if (event.button !== 0 || event.pointerType !== "mouse") return;
       renderer.domElement.requestPointerLock();
     };
     const onPointerLockChange = () => {
@@ -232,6 +299,8 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
       setShowSpeedIndicator(true);
       if (speedIndicatorTimeoutRef.current !== null)
         window.clearTimeout(speedIndicatorTimeoutRef.current);
+      if (cameraNoticeTimeoutRef.current !== null)
+        window.clearTimeout(cameraNoticeTimeoutRef.current);
       speedIndicatorTimeoutRef.current = window.setTimeout(() => {
         setShowSpeedIndicator(false);
         speedIndicatorTimeoutRef.current = null;
@@ -448,13 +517,28 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
     const render = () => {
       frame = requestAnimationFrame(render);
       const delta = Math.min(clock.getDelta(), 0.1);
+      const mobileMovement = mobileMovementRef.current;
       if (camera.fov !== cameraFovRef.current) {
         camera.fov = cameraFovRef.current;
         camera.updateProjectionMatrix();
       }
       animationElapsed += delta;
       transformAnimators.forEach((animator) => applyTransformFrame(animator, animationElapsed));
-      if (pressedKeys.size > 0) {
+      if (mobileMovement.lookX !== 0 || mobileMovement.lookY !== 0) {
+        const mobileLookSpeed = 3.2;
+        camera.rotation.y -= mobileMovement.lookX * mobileLookSpeed * delta;
+        camera.rotation.x = THREE.MathUtils.clamp(
+          camera.rotation.x - mobileMovement.lookY * mobileLookSpeed * delta,
+          -Math.PI / 2 + 0.01,
+          Math.PI / 2 - 0.01,
+        );
+      }
+      if (
+        pressedKeys.size > 0 ||
+        mobileMovement.forward !== 0 ||
+        mobileMovement.sideways !== 0 ||
+        mobileMovement.vertical !== 0
+      ) {
         const sprintMultiplier =
           pressedKeys.has("ShiftLeft") === true || pressedKeys.has("ShiftRight") === true ? 2 : 1;
         const distance = baseMoveSpeed * (moveSpeedRef.current / 50) * sprintMultiplier * delta;
@@ -467,8 +551,13 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
         if (pressedKeys.has("KeyD") === true) movement.add(right);
         if (pressedKeys.has("KeyQ") === true) movement.sub(worldUp);
         if (pressedKeys.has("KeyE") === true) movement.add(worldUp);
-        if (movement.lengthSq() > 0)
-          camera.position.addScaledVector(movement.normalize(), distance);
+        movement.addScaledVector(forward, mobileMovement.forward);
+        movement.addScaledVector(right, mobileMovement.sideways);
+        movement.addScaledVector(worldUp, mobileMovement.vertical);
+        if (movement.lengthSq() > 0) {
+          const inputStrength = Math.min(movement.length(), 1);
+          camera.position.addScaledVector(movement.normalize(), distance * inputStrength);
+        }
       }
       textureAnimators.forEach((animator) => {
         const tick = Math.floor(animationElapsed * animator.tickRateHz) % animator.cycleTicks;
@@ -507,6 +596,13 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
       runtimeTextures.forEach((texture) => texture.dispose());
       renderer.dispose();
       renderer.domElement.remove();
+      mobileMovementRef.current = {
+        forward: 0,
+        sideways: 0,
+        vertical: 0,
+        lookX: 0,
+        lookY: 0,
+      };
     };
   }, [track, onError, onProgress, onReady, onSkyboxReady]);
 
@@ -515,7 +611,11 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
     moveSpeed,
     showSpeedIndicator,
     snapshotCopied,
+    cameraNotice,
     createCameraSnapshot,
     resetCamera,
+    setMobileMove,
+    setMobileLook,
+    setMobileVertical,
   };
 }
