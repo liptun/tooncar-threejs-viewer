@@ -10,6 +10,7 @@ import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { SSRPass } from "three/examples/jsm/postprocessing/SSRPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { createIndependentLoopClips } from "@/lib/three/animations";
+import { AutoExposure } from "@/lib/three/autoExposure";
 import { createLitMaterial, createUnlitMaterial } from "@/lib/three/materials";
 import type { Track } from "@/tracks";
 import {
@@ -316,9 +317,10 @@ export function useTrackViewer({
     renderer.shadowMap.enabled = false;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     mount.appendChild(renderer.domElement);
+    const autoExposure = new AutoExposure(renderer);
 
-    const skyIntensity = track.lighting?.skyIntensity ?? 0.08;
-    const environmentIntensity = track.lighting?.environmentIntensity ?? 0.08;
+    const skyIntensity = track.lighting?.skyIntensity ?? 0.005;
+    const environmentIntensity = track.lighting?.environmentIntensity ?? 0.005;
     const skyLight = new THREE.HemisphereLight(0xffffff, 0x35405a, skyIntensity);
     const environmentLight = new THREE.LightProbe();
     environmentLight.intensity = environmentIntensity;
@@ -368,7 +370,7 @@ export function useTrackViewer({
       screenSpaceRadius: true,
     });
     gtaoPass.updatePdMaterial({ radius: 3, rings: 2, samples: 8 });
-    gtaoPass.blendIntensity = 0.35;
+    gtaoPass.blendIntensity = 0.55;
     const renderGtao = gtaoPass.render.bind(gtaoPass);
     gtaoPass.render = (...args: Parameters<GTAOPass["render"]>) => {
       const visibility = new Map<THREE.Mesh, boolean>();
@@ -651,7 +653,7 @@ export function useTrackViewer({
           sunOffset.set(radius * 0.75, radius * 0.65, radius * 0.5);
           sun.position.copy(camera.position).add(sunOffset);
           sun.target.position.copy(camera.position);
-          const shadowRange = radius * 0.65;
+          const shadowRange = radius * (track.lighting?.shadowRangeFactor ?? 0.65);
           sun.shadow.camera.left = -shadowRange;
           sun.shadow.camera.right = shadowRange;
           sun.shadow.camera.top = shadowRange;
@@ -773,8 +775,13 @@ export function useTrackViewer({
         sun.target.position.copy(camera.position);
         sun.target.updateMatrixWorld();
       }
-      if (enhancedGraphicsRef.current === true) composer.render(delta);
-      else renderer.render(scene, camera);
+      if (enhancedGraphicsRef.current === true) {
+        composer.render(delta);
+        autoExposure.update(delta, true);
+      } else {
+        renderer.render(scene, camera);
+        autoExposure.update(delta, false);
+      }
     };
     render();
 

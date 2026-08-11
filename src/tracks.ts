@@ -9,6 +9,7 @@ export type Track = {
     sunIntensity: number;
     skyIntensity: number;
     environmentIntensity: number;
+    shadowRangeFactor?: number;
   };
   bloom?: {
     strength: number;
@@ -74,6 +75,11 @@ export const tracks: Track[] = [
     modelUrl: "/tracks/sahara/Sahara.glb",
     thumbnailUrl: "/tracks/sahara/thumbnail.jpg",
     musicUrl: "/music/Track01.mp3",
+    lighting: {
+      sunIntensity: 2.8,
+      skyIntensity: 0.04,
+      environmentIntensity: 0.02,
+    },
     cameraStart: {
       position: [-4.3697, -2.0048, -16.5463],
       rotation: [0.068163, 9.227398, 0],
@@ -126,6 +132,11 @@ export const tracks: Track[] = [
     modelUrl: "/tracks/japon/Japon.glb",
     thumbnailUrl: "/tracks/japon/thumbnail.jpg",
     musicUrl: "/music/Track05.mp3",
+    lighting: {
+      sunIntensity: 2.4,
+      skyIntensity: 0,
+      environmentIntensity: 0,
+    },
     cameraStart: {
       position: [-5.8153, -3.3664, 37.3004],
       rotation: [-0.069837, -0.348602, 0],
@@ -140,9 +151,10 @@ export const tracks: Track[] = [
     thumbnailUrl: "/tracks/alaska/thumbnail.jpg",
     musicUrl: "/music/Track00.mp3",
     lighting: {
-      sunIntensity: 0.9,
-      skyIntensity: 0.05,
-      environmentIntensity: 0.04,
+      sunIntensity: 2.5,
+      skyIntensity: 0,
+      environmentIntensity: 0,
+      shadowRangeFactor: 0.3,
     },
     bloom: {
       strength: 0,
