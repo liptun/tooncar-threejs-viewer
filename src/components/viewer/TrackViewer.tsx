@@ -1,7 +1,7 @@
-import type { Track } from "../../tracks";
-import { useTrackViewer } from "../../hooks/useTrackViewer";
-import { SpeedIndicator } from "./SpeedIndicator";
-import { ViewerControls } from "./ViewerControls";
+import { SpeedIndicator } from "@/components/viewer/SpeedIndicator";
+import { ViewerControls } from "@/components/viewer/ViewerControls";
+import { useTrackViewer } from "@/hooks/useTrackViewer";
+import type { Track } from "@/tracks";
 
 type Props = {
   track: Track;

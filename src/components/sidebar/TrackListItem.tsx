@@ -1,5 +1,5 @@
-import { cn } from "../../lib/cn";
-import type { Track } from "../../tracks";
+import { cn } from "@/lib/cn";
+import type { Track } from "@/tracks";
 
 type Props = {
   track: Track;

@@ -1,6 +1,6 @@
 import { Pause, Play, Volume2, VolumeX } from "lucide-react";
-import { useAudioPlayer } from "../../hooks/useAudioPlayer";
-import { cn } from "../../lib/cn";
+import { useAudioPlayer } from "@/hooks/useAudioPlayer";
+import { cn } from "@/lib/cn";
 
 type Props = {
   musicUrl: string;

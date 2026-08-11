@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import type { Track } from "../tracks";
-import { createIndependentLoopClips } from "../lib/three/animations";
-import { createUnlitMaterial } from "../lib/three/materials";
+import { createIndependentLoopClips } from "@/lib/three/animations";
+import { createUnlitMaterial } from "@/lib/three/materials";
+import type { Track } from "@/tracks";
 import {
   drawTextureAnimationFrame,
   loadCubeTexture,
@@ -16,7 +16,7 @@ import {
   type TextureAnimationIndex,
   type TextureAnimationMetadata,
   type TextureAnimator,
-} from "../lib/three/runtimeAssets";
+} from "@/lib/three/runtimeAssets";
 
 type Props = {
   track: Track;

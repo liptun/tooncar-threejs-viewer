@@ -1,8 +1,8 @@
-import { cn } from "../../lib/cn";
-import type { Track } from "../../tracks";
-import { TrackListItem } from "./TrackListItem";
-import { TrackSidebarHeader } from "./TrackSidebarHeader";
-import { TrackSidebarToggle } from "./TrackSidebarToggle";
+import { TrackListItem } from "@/components/sidebar/TrackListItem";
+import { TrackSidebarHeader } from "@/components/sidebar/TrackSidebarHeader";
+import { TrackSidebarToggle } from "@/components/sidebar/TrackSidebarToggle";
+import { cn } from "@/lib/cn";
+import type { Track } from "@/tracks";
 
 type Props = {
   tracks: Track[];

@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
-import { Jukebox } from "../components/audio/Jukebox";
-import { TrackSidebar } from "../components/sidebar/TrackSidebar";
-import { TrackLoadingOverlay } from "../components/viewer/TrackLoadingOverlay";
-import { TrackViewer } from "../components/viewer/TrackViewer";
-import { useTrackLoading } from "../hooks/useTrackLoading";
-import { tracks } from "../tracks";
+import { Jukebox } from "@/components/audio/Jukebox";
+import { TrackSidebar } from "@/components/sidebar/TrackSidebar";
+import { TrackLoadingOverlay } from "@/components/viewer/TrackLoadingOverlay";
+import { TrackViewer } from "@/components/viewer/TrackViewer";
+import { useTrackLoading } from "@/hooks/useTrackLoading";
+import { tracks } from "@/tracks";
 
 export function TrackPage() {
   const { trackId } = useParams();

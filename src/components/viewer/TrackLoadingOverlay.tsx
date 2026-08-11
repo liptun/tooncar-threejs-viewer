@@ -1,5 +1,5 @@
 import { Sparkles } from "lucide-react";
-import { cn } from "../../lib/cn";
+import { cn } from "@/lib/cn";
 
 type Props = {
   progress: number;

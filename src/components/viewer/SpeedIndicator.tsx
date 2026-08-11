@@ -1,5 +1,5 @@
 import { Gauge } from "lucide-react";
-import { cn } from "../../lib/cn";
+import { cn } from "@/lib/cn";
 
 type Props = {
   speed: number;

@@ -1,6 +1,6 @@
 import { Camera, Maximize, RotateCcw } from "lucide-react";
-import { cn } from "../../lib/cn";
-import { ExpandableIconButton } from "../common/ExpandableIconButton";
+import { ExpandableIconButton } from "@/components/common/ExpandableIconButton";
+import { cn } from "@/lib/cn";
 
 type Props = {
   snapshotCopied: boolean;
