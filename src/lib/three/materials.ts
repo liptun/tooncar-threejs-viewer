@@ -11,6 +11,28 @@ type TexturedMaterial = THREE.Material & {
 
 type AlphaMode = "opaque" | "clip" | "blend";
 
+const CUTOUT_TEXTURE_MARKERS = [
+  "arbol",
+  "bandera",
+  "cactus",
+  "espino",
+  "flor",
+  "hoja",
+  "juncos",
+  "palmera",
+  "rejas",
+  "trigo",
+  "valla",
+  "vegt",
+];
+
+function getSemanticAlphaMode(texture: THREE.Texture | null): AlphaMode | null {
+  const textureName = texture?.name.toLowerCase() ?? "";
+  if (textureName.includes("agua") === true) return "blend";
+  if (CUTOUT_TEXTURE_MARKERS.some((marker) => textureName.includes(marker)) === true) return "clip";
+  return null;
+}
+
 function classifyTextureAlpha(texture: THREE.Texture | null): AlphaMode | null {
   const image = texture?.image as CanvasImageSource | undefined;
   if (image === undefined) return null;
@@ -61,13 +83,17 @@ export function createUnlitMaterial(source: THREE.Material, maximumAnisotropy: n
   configureTextureFiltering(material.map ?? null, maximumAnisotropy);
   configureTextureFiltering(material.alphaMap ?? null, maximumAnisotropy);
   const usesAlpha = source.transparent === true || source.alphaHash === true;
-  const detectedAlphaMode = classifyTextureAlpha(material.alphaMap ?? material.map ?? null);
+  const alphaTexture = material.alphaMap ?? material.map ?? null;
+  const semanticAlphaMode = getSemanticAlphaMode(alphaTexture);
+  const detectedAlphaMode = classifyTextureAlpha(alphaTexture);
   const alphaMode: AlphaMode =
     usesAlpha === false
       ? "opaque"
-      : material.opacity !== undefined && material.opacity < 1
-        ? "blend"
-        : (detectedAlphaMode ?? "clip");
+      : semanticAlphaMode !== null
+        ? semanticAlphaMode
+        : material.opacity !== undefined && material.opacity < 1
+          ? "blend"
+          : (detectedAlphaMode ?? "clip");
   const usesBlend = alphaMode === "blend";
   const usesClip = alphaMode === "clip";
   const unlit = new THREE.MeshBasicMaterial({
