@@ -2,8 +2,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { LightProbeGenerator } from "three/examples/jsm/lights/LightProbeGenerator.js";
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
+import { GTAOPass } from "three/examples/jsm/postprocessing/GTAOPass.js";
+import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
+import { SSRPass } from "three/examples/jsm/postprocessing/SSRPass.js";
+import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { createIndependentLoopClips } from "@/lib/three/animations";
-import { createUnlitMaterial } from "@/lib/three/materials";
+import { createLitMaterial, createUnlitMaterial } from "@/lib/three/materials";
 import type { Track } from "@/tracks";
 import {
   drawTextureAnimationFrame,
@@ -33,6 +40,61 @@ type MobileMovement = {
   lookX: number;
   lookY: number;
 };
+
+function getSkyboxHorizonColor(texture: THREE.CubeTexture) {
+  const faces = texture.image as Array<
+    CanvasImageSource & {
+      width?: number;
+      height?: number;
+      naturalWidth?: number;
+      naturalHeight?: number;
+    }
+  >;
+  const sideFaces = [faces[0], faces[1], faces[4], faces[5]];
+  const canvas = document.createElement("canvas");
+  canvas.width = 16;
+  canvas.height = 8;
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  if (context === null || sideFaces.some((face) => face === undefined) === true) return null;
+
+  let red = 0;
+  let green = 0;
+  let blue = 0;
+  let pixelCount = 0;
+
+  for (const face of sideFaces) {
+    const width = face.naturalWidth ?? face.width ?? 0;
+    const height = face.naturalHeight ?? face.height ?? 0;
+    if (width === 0 || height === 0) continue;
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(
+      face,
+      0,
+      Math.round(height * 0.35),
+      width,
+      Math.max(1, Math.round(height * 0.3)),
+      0,
+      0,
+      canvas.width,
+      canvas.height,
+    );
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    for (let index = 0; index < pixels.length; index += 4) {
+      red += pixels[index];
+      green += pixels[index + 1];
+      blue += pixels[index + 2];
+      pixelCount += 1;
+    }
+  }
+
+  if (pixelCount === 0) return null;
+  return new THREE.Color().setRGB(
+    red / pixelCount / 255,
+    green / pixelCount / 255,
+    blue / pixelCount / 255,
+    THREE.SRGBColorSpace,
+  );
+}
 
 function readCameraSnapshot() {
   const params = new URLSearchParams(window.location.search);
@@ -83,10 +145,13 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
   const [showSpeedIndicator, setShowSpeedIndicator] = useState(false);
   const [snapshotCopied, setSnapshotCopied] = useState(false);
   const [cameraNotice, setCameraNotice] = useState<string | null>(null);
+  const [enhancedGraphics, setEnhancedGraphics] = useState(false);
   const speedIndicatorTimeoutRef = useRef<number | null>(null);
   const cameraNoticeTimeoutRef = useRef<number | null>(null);
   const moveSpeedRef = useRef(60);
   const cameraFovRef = useRef(75);
+  const enhancedGraphicsRef = useRef(false);
+  const applyEnhancedGraphicsRef = useRef<(enabled: boolean) => void>(() => undefined);
   const mobileMovementRef = useRef<MobileMovement>({
     forward: 0,
     sideways: 0,
@@ -107,6 +172,15 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
 
   const setMobileVertical = useCallback((vertical: number) => {
     mobileMovementRef.current.vertical = vertical;
+  }, []);
+
+  const toggleEnhancedGraphics = useCallback(() => {
+    setEnhancedGraphics((enabled) => {
+      const nextEnabled = enabled === false;
+      enhancedGraphicsRef.current = nextEnabled;
+      applyEnhancedGraphicsRef.current(nextEnabled);
+      return nextEnabled;
+    });
   }, []);
 
   const updateMoveSpeed = (value: number) => {
@@ -193,8 +267,15 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
     const forward = new THREE.Vector3();
     const right = new THREE.Vector3();
     const worldUp = new THREE.Vector3(0, 1, 0);
+    const sunOffset = new THREE.Vector3(50, 75, 37.5);
     const textureAnimators: TextureAnimator[] = [];
     const runtimeTextures: THREE.Texture[] = [];
+    const aoExcludedMeshes = new Set<THREE.Mesh>();
+    const waterMeshes: THREE.Mesh[] = [];
+    const materialVariants = new Map<
+      THREE.Mesh,
+      { unlit: THREE.MeshBasicMaterial[]; lit: THREE.MeshLambertMaterial[]; usesArray: boolean }
+    >();
     let runtimeManifest: RuntimeManifest | undefined;
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(cameraFovRef.current, 1, 0.1, 10000);
@@ -207,7 +288,100 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1;
     renderer.shadowMap.enabled = false;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     mount.appendChild(renderer.domElement);
+
+    const skyIntensity = track.lighting?.skyIntensity ?? 0.08;
+    const environmentIntensity = track.lighting?.environmentIntensity ?? 0.08;
+    const skyLight = new THREE.HemisphereLight(0xffffff, 0x35405a, skyIntensity);
+    const environmentLight = new THREE.LightProbe();
+    environmentLight.intensity = environmentIntensity;
+    const enhancedFog = new THREE.Fog(0x74808f, 50, 400);
+    const sun = new THREE.DirectionalLight(0xfff1d2, track.lighting?.sunIntensity ?? 1.6);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(4096, 4096);
+    sun.shadow.radius = 1.5;
+    scene.add(skyLight, environmentLight, sun, sun.target);
+
+    const applyEnhancedGraphics = (enabled: boolean) => {
+      renderer.shadowMap.enabled = enabled;
+      scene.fog = enabled === true ? enhancedFog : null;
+      materialVariants.forEach(({ unlit, lit, usesArray }, mesh) => {
+        const current = (
+          Array.isArray(mesh.material) === true ? mesh.material : [mesh.material]
+        ) as Array<THREE.MeshBasicMaterial | THREE.MeshLambertMaterial>;
+        const target = enabled === true ? lit : unlit;
+        target.forEach((material, index) => {
+          const source = current[index];
+          if (source === undefined) return;
+          material.map = source.map;
+          material.alphaMap = source.alphaMap;
+          material.needsUpdate = true;
+        });
+        mesh.material = usesArray === true ? target : target[0];
+      });
+    };
+    applyEnhancedGraphicsRef.current = applyEnhancedGraphics;
+
+    const composer = new EffectComposer(renderer);
+    composer.setPixelRatio(renderer.getPixelRatio());
+    const renderPass = new RenderPass(scene, camera);
+    const gtaoPass = new GTAOPass(scene, camera, 1, 1);
+    gtaoPass.updateGtaoMaterial({
+      radius: 0.22,
+      distanceExponent: 1.5,
+      thickness: 1,
+      distanceFallOff: 1,
+      scale: 1,
+      samples: 16,
+      screenSpaceRadius: true,
+    });
+    gtaoPass.updatePdMaterial({ radius: 3, rings: 2, samples: 8 });
+    gtaoPass.blendIntensity = 0.35;
+    const renderGtao = gtaoPass.render.bind(gtaoPass);
+    gtaoPass.render = (...args: Parameters<GTAOPass["render"]>) => {
+      const visibility = new Map<THREE.Mesh, boolean>();
+      aoExcludedMeshes.forEach((mesh) => {
+        visibility.set(mesh, mesh.visible);
+        mesh.visible = false;
+      });
+      try {
+        renderGtao(...args);
+      } finally {
+        visibility.forEach((visible, mesh) => {
+          mesh.visible = visible;
+        });
+      }
+    };
+    const outputPass = new OutputPass();
+    const bloomPass = new UnrealBloomPass(
+      new THREE.Vector2(1, 1),
+      track.bloom?.strength ?? 0.28,
+      0.35,
+      track.bloom?.threshold ?? 0.82,
+    );
+    const ssrPass = new SSRPass({
+      renderer,
+      scene,
+      camera,
+      width: 1,
+      height: 1,
+      selects: waterMeshes,
+      groundReflector: null,
+    });
+    ssrPass.opacity = 0.4;
+    ssrPass.maxDistance = 80;
+    ssrPass.thickness = 0.025;
+    ssrPass.blur = true;
+    ssrPass.distanceAttenuation = true;
+    ssrPass.fresnel = true;
+    ssrPass.resolutionScale = 0.65;
+    ssrPass.enabled = false;
+    composer.addPass(renderPass);
+    composer.addPass(ssrPass);
+    composer.addPass(gtaoPass);
+    composer.addPass(bloomPass);
+    composer.addPass(outputPass);
 
     let isDragging = false;
     camera.rotation.order = "YXZ";
@@ -294,6 +468,10 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
         );
         if (disposed === true) return cubeTexture.dispose();
         cubeTexture.colorSpace = THREE.SRGBColorSpace;
+        environmentLight.copy(LightProbeGenerator.fromCubeTexture(cubeTexture));
+        environmentLight.intensity = environmentIntensity;
+        const horizonColor = getSkyboxHorizonColor(cubeTexture);
+        if (horizonColor !== null) enhancedFog.color.copy(horizonColor);
         runtimeTextures.push(cubeTexture);
         if (scene.background instanceof THREE.Texture === true) scene.background.dispose();
         scene.background = cubeTexture;
@@ -343,7 +521,8 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
               materials.forEach((material) => {
                 if (
                   material.name !== materialName ||
-                  material instanceof THREE.MeshBasicMaterial === false
+                  (material instanceof THREE.MeshBasicMaterial === false &&
+                    material instanceof THREE.MeshLambertMaterial === false)
                 )
                   return;
                 material.map = frameTexture;
@@ -388,14 +567,33 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
               const unlitMaterials = sourceMaterials.map((material) =>
                 createUnlitMaterial(material, maximumAnisotropy),
               );
-              object.material =
-                Array.isArray(object.material) === true ? unlitMaterials : unlitMaterials[0];
+              const litMaterials = unlitMaterials.map(createLitMaterial);
+              const usesWaterTexture = unlitMaterials.some(
+                (material) => material.map?.name.toLowerCase().includes("agua") === true,
+              );
+              const usesArray = Array.isArray(object.material) === true;
+              materialVariants.set(object, {
+                unlit: unlitMaterials,
+                lit: litMaterials,
+                usesArray,
+              });
+              const initialMaterials =
+                enhancedGraphicsRef.current === true ? litMaterials : unlitMaterials;
+              object.material = usesArray === true ? initialMaterials : initialMaterials[0];
+              if (
+                unlitMaterials.some(
+                  (material) => material.transparent === true || material.alphaTest > 0,
+                ) === true
+              )
+                aoExcludedMeshes.add(object);
+              if (usesWaterTexture === true) waterMeshes.push(object);
               sourceMaterials.forEach((material) => material.dispose());
-              object.castShadow = false;
-              object.receiveShadow = false;
+              object.castShadow = true;
+              object.receiveShadow = true;
             }
           });
           scene.add(model);
+          ssrPass.enabled = waterMeshes.length > 0;
           void setupRuntimeAssets(model);
 
           const box = new THREE.Box3().setFromObject(model);
@@ -403,6 +601,23 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
           const size = box.getSize(new THREE.Vector3());
           const largestDimension = Math.max(size.x, size.y, size.z);
           const radius = largestDimension > 0 ? largestDimension : 10;
+          enhancedFog.near = radius * 0.15;
+          enhancedFog.far = radius;
+          ssrPass.maxDistance = Math.max(radius * 0.3, 40);
+          sunOffset.set(radius * 0.75, radius * 0.65, radius * 0.5);
+          sun.position.copy(camera.position).add(sunOffset);
+          sun.target.position.copy(camera.position);
+          const shadowRange = radius * 0.65;
+          sun.shadow.camera.left = -shadowRange;
+          sun.shadow.camera.right = shadowRange;
+          sun.shadow.camera.top = shadowRange;
+          sun.shadow.camera.bottom = -shadowRange;
+          sun.shadow.camera.near = Math.max(radius * 0.01, 0.1);
+          sun.shadow.camera.far = radius * 4;
+          sun.shadow.bias = -0.0004;
+          sun.shadow.normalBias = 0.002;
+          sun.shadow.camera.updateProjectionMatrix();
+          applyEnhancedGraphics(enhancedGraphicsRef.current);
           baseMoveSpeed = Math.max(radius * 0.15, 1);
           camera.position
             .copy(center)
@@ -451,6 +666,7 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
     const resize = () => {
       const { clientWidth, clientHeight } = mount;
       renderer.setSize(clientWidth, clientHeight, false);
+      composer.setSize(clientWidth, clientHeight);
       camera.aspect = clientWidth / Math.max(clientHeight, 1);
       camera.updateProjectionMatrix();
     };
@@ -508,7 +724,13 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
         const tick = Math.floor(animationElapsed * animator.tickRateHz) % animator.cycleTicks;
         drawTextureAnimationFrame(animator, animator.tickFrames[tick] ?? 0);
       });
-      renderer.render(scene, camera);
+      if (enhancedGraphicsRef.current === true) {
+        sun.position.copy(camera.position).add(sunOffset);
+        sun.target.position.copy(camera.position);
+        sun.target.updateMatrixWorld();
+      }
+      if (enhancedGraphicsRef.current === true) composer.render(delta);
+      else renderer.render(scene, camera);
     };
     render();
 
@@ -533,15 +755,23 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
       scene.traverse((object) => {
         if (object instanceof THREE.Mesh === true) {
           object.geometry?.dispose();
-          const materials =
-            Array.isArray(object.material) === true ? object.material : [object.material];
-          materials.forEach((material) => material.dispose());
         }
+      });
+      materialVariants.forEach(({ unlit, lit }) => {
+        unlit.forEach((material) => material.dispose());
+        lit.forEach((material) => material.dispose());
       });
       if (scene.background instanceof THREE.Texture === true) scene.background.dispose();
       runtimeTextures.forEach((texture) => texture.dispose());
+      gtaoPass.dispose();
+      ssrPass.dispose();
+      bloomPass.dispose();
+      renderPass.dispose();
+      outputPass.dispose();
+      composer.dispose();
       renderer.dispose();
       renderer.domElement.remove();
+      applyEnhancedGraphicsRef.current = () => undefined;
       mobileMovementRef.current = {
         forward: 0,
         sideways: 0,
@@ -558,8 +788,10 @@ export function useTrackViewer({ track, onProgress, onReady, onError, onSkyboxRe
     showSpeedIndicator,
     snapshotCopied,
     cameraNotice,
+    enhancedGraphics,
     createCameraSnapshot,
     resetCamera,
+    toggleEnhancedGraphics,
     setMobileMove,
     setMobileLook,
     setMobileVertical,

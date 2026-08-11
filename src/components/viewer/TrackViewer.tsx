@@ -24,7 +24,9 @@ export function TrackViewer(props: Props) {
         aria-label={`Widok 3D trasy ${props.track.name}`}
       />
       <ViewerControls
+        enhancedGraphics={viewer.enhancedGraphics}
         snapshotCopied={viewer.snapshotCopied}
+        onToggleEnhancedGraphics={viewer.toggleEnhancedGraphics}
         onResetCamera={viewer.resetCamera}
         onCreateSnapshot={() => void viewer.createCameraSnapshot()}
       />

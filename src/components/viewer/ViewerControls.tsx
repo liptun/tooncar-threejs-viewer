@@ -1,14 +1,22 @@
-import { Camera, Maximize, RotateCcw } from "lucide-react";
+import { Camera, Maximize, RotateCcw, Sparkles } from "lucide-react";
 import { ExpandableIconButton } from "@/components/common/ExpandableIconButton";
 import { cn } from "@/lib/cn";
 
 type Props = {
+  enhancedGraphics: boolean;
   snapshotCopied: boolean;
+  onToggleEnhancedGraphics: () => void;
   onResetCamera: () => void;
   onCreateSnapshot: () => void;
 };
 
-export function ViewerControls({ snapshotCopied, onResetCamera, onCreateSnapshot }: Props) {
+export function ViewerControls({
+  enhancedGraphics,
+  snapshotCopied,
+  onToggleEnhancedGraphics,
+  onResetCamera,
+  onCreateSnapshot,
+}: Props) {
   return (
     <div
       className={cn(
@@ -17,6 +25,15 @@ export function ViewerControls({ snapshotCopied, onResetCamera, onCreateSnapshot
         "max-sm:right-4 max-sm:top-4",
       )}
     >
+      <ExpandableIconButton
+        icon={<Sparkles size={17} />}
+        label={enhancedGraphics === true ? "RTX: ON" : "RTX: OFF"}
+        onClick={onToggleEnhancedGraphics}
+        aria-pressed={enhancedGraphics}
+        aria-label="Przełącz ulepszone cieniowanie"
+        title="Ulepszone cieniowanie GTAO"
+        className={cn(enhancedGraphics === true && "border-primary/60 bg-primary/25 text-primary")}
+      />
       <ExpandableIconButton
         icon={<RotateCcw size={17} />}
         label="Resetuj kamerę"

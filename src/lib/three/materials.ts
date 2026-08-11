@@ -93,3 +93,27 @@ export function createUnlitMaterial(source: THREE.Material, maximumAnisotropy: n
   unlit.polygonOffsetUnits = source.polygonOffsetUnits;
   return unlit;
 }
+
+export function createLitMaterial(source: THREE.MeshBasicMaterial) {
+  const lit = new THREE.MeshLambertMaterial({
+    name: source.name,
+    map: source.map,
+    alphaMap: source.alphaMap,
+    color: source.color.clone(),
+    opacity: source.opacity,
+    alphaTest: source.alphaTest,
+    transparent: source.transparent,
+    side: source.side,
+    vertexColors: source.vertexColors,
+    depthTest: source.depthTest,
+    depthWrite: source.depthWrite,
+    blending: source.blending,
+  });
+
+  lit.toneMapped = false;
+  lit.forceSinglePass = source.forceSinglePass;
+  lit.polygonOffset = source.polygonOffset;
+  lit.polygonOffsetFactor = source.polygonOffsetFactor;
+  lit.polygonOffsetUnits = source.polygonOffsetUnits;
+  return lit;
+}

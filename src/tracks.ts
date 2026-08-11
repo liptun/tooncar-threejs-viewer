@@ -5,6 +5,15 @@ export type Track = {
   modelUrl: string;
   thumbnailUrl: string;
   musicUrl: string;
+  lighting?: {
+    sunIntensity: number;
+    skyIntensity: number;
+    environmentIntensity: number;
+  };
+  bloom?: {
+    strength: number;
+    threshold: number;
+  };
   cameraStart: {
     position: [number, number, number];
     rotation: [number, number, number];
@@ -34,6 +43,11 @@ export const tracks: Track[] = [
     modelUrl: "/tracks/luna/Luna.glb",
     thumbnailUrl: "/tracks/luna/thumbnail.jpg",
     musicUrl: "/music/Track00.mp3",
+    lighting: {
+      sunIntensity: 2.1,
+      skyIntensity: 0.18,
+      environmentIntensity: 0.14,
+    },
     cameraStart: {
       position: [-22.5001, -10.7354, 28.5046],
       rotation: [0.308163, 5.033398, 0],
@@ -125,6 +139,15 @@ export const tracks: Track[] = [
     modelUrl: "/tracks/alaska/Alaska.glb",
     thumbnailUrl: "/tracks/alaska/thumbnail.jpg",
     musicUrl: "/music/Track00.mp3",
+    lighting: {
+      sunIntensity: 0.9,
+      skyIntensity: 0.05,
+      environmentIntensity: 0.04,
+    },
+    bloom: {
+      strength: 0,
+      threshold: 1,
+    },
     cameraStart: {
       position: [29.2191, 0.937, 37.5901],
       rotation: [-0.129837, 13.283398, 0],
