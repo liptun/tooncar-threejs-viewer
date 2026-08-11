@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://tooncarviewer.netlify.app/track/venus">Uruchom wersję online</a>
+  <a href="https://tooncarviewer.netlify.app">Uruchom wersję online</a>
 </p>
 
 ## O projekcie
