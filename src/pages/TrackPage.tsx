@@ -5,6 +5,7 @@ import { TouchJukebox } from "@/components/audio/TouchJukebox";
 import { TrackSidebar } from "@/components/sidebar/TrackSidebar";
 import { TrackLoadingOverlay } from "@/components/viewer/TrackLoadingOverlay";
 import { TrackViewer } from "@/components/viewer/TrackViewer";
+import { ViewerWatermark } from "@/components/viewer/ViewerWatermark";
 import { useTrackLoading } from "@/hooks/useTrackLoading";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 import { tracks } from "@/tracks";
@@ -45,6 +46,7 @@ export function TrackPage({ backgroundMode = false }: Props) {
           onError={loading.handleError}
           onSkyboxReady={loading.handleSkyboxReady}
         />
+        <ViewerWatermark />
         {backgroundMode === false && <Jukebox musicUrl={track.musicUrl} player={player} />}
         {backgroundMode === false && <TouchJukebox player={player} />}
         {backgroundMode === false && loading.ready === false && (

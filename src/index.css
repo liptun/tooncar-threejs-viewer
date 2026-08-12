@@ -120,6 +120,10 @@
 }
 
 @media (any-pointer: coarse) {
+  .viewer-watermark {
+    display: none;
+  }
+
   .desktop-ui {
     display: none;
   }
