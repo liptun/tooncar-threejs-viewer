@@ -50,6 +50,7 @@ export function TrackPage({ backgroundMode = false }: Props) {
           onReady={loading.handleReady}
           onError={loading.handleError}
           onSkyboxReady={loading.handleSkyboxReady}
+          onShowControlsTutorial={controlsTutorial.show}
         />
         <ViewerWatermark />
         {backgroundMode === false && <Jukebox musicUrl={track.musicUrl} player={player} />}
@@ -62,7 +63,10 @@ export function TrackPage({ backgroundMode = false }: Props) {
           />
         )}
         {controlsTutorial.visible === true && (
-          <DesktopControlsTutorial onComplete={controlsTutorial.complete} />
+          <DesktopControlsTutorial
+            fadingOut={controlsTutorial.fadingOut}
+            onDismiss={controlsTutorial.complete}
+          />
         )}
       </section>
     </main>

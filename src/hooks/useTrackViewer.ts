@@ -45,6 +45,18 @@ type MobileMovement = {
 
 export type CameraLinkType = "interactive" | "static";
 
+function isSafariBrowser() {
+  const userAgent = navigator.userAgent;
+  return (
+    userAgent.includes("Safari") &&
+    userAgent.includes("Chrome") === false &&
+    userAgent.includes("Chromium") === false &&
+    userAgent.includes("CriOS") === false &&
+    userAgent.includes("Edg") === false &&
+    userAgent.includes("OPR") === false
+  );
+}
+
 function getSkyboxHorizonColor(texture: THREE.CubeTexture) {
   const faces = texture.image as Array<
     CanvasImageSource & {
@@ -417,10 +429,20 @@ export function useTrackViewer({
     composer.addPass(outputPass);
 
     let isDragging = false;
+    let capturedPointerId: number | null = null;
+    const usePointerLock = isSafariBrowser() === false;
     camera.rotation.order = "YXZ";
 
     const stopDragging = () => {
-      if (document.pointerLockElement === renderer.domElement) document.exitPointerLock();
+      if (usePointerLock === true && document.pointerLockElement === renderer.domElement)
+        document.exitPointerLock();
+      if (
+        capturedPointerId !== null &&
+        renderer.domElement.hasPointerCapture(capturedPointerId) === true
+      ) {
+        renderer.domElement.releasePointerCapture(capturedPointerId);
+      }
+      capturedPointerId = null;
       isDragging = false;
       renderer.domElement.style.cursor = "grab";
     };
@@ -430,7 +452,15 @@ export function useTrackViewer({
     };
     const onPointerDown = (event: PointerEvent) => {
       if (controlsEnabled === false || event.button !== 0 || event.pointerType !== "mouse") return;
-      renderer.domElement.requestPointerLock();
+      if (usePointerLock === true) {
+        renderer.domElement.requestPointerLock();
+        return;
+      }
+
+      isDragging = true;
+      capturedPointerId = event.pointerId;
+      renderer.domElement.setPointerCapture(event.pointerId);
+      renderer.domElement.style.cursor = "grabbing";
     };
     const onPointerLockChange = () => {
       isDragging = document.pointerLockElement === renderer.domElement;
@@ -440,7 +470,7 @@ export function useTrackViewer({
       if (
         controlsEnabled === false ||
         isDragging === false ||
-        document.pointerLockElement !== renderer.domElement
+        (usePointerLock === true && document.pointerLockElement !== renderer.domElement)
       )
         return;
       const sensitivity = 0.006;
