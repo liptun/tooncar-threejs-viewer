@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const STORAGE_KEY = "tooncar.desktop-controls-tutorial";
 const TUTORIAL_VERSION = 1;
@@ -32,15 +32,23 @@ function readTutorialProgress(): TutorialProgress | null {
 
 export function useDesktopControlsTutorial(enabled: boolean) {
   const [visible, setVisible] = useState(false);
+  const [fadingOut, setFadingOut] = useState(false);
+  const revealTimeoutRef = useRef<number | null>(null);
+  const dismissTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (enabled === false) {
+      if (revealTimeoutRef.current !== null) window.clearTimeout(revealTimeoutRef.current);
       setVisible(false);
       return;
     }
 
     const desktopPointer = window.matchMedia("(any-pointer: fine)");
     const updateVisibility = () => {
+      if (revealTimeoutRef.current !== null) {
+        window.clearTimeout(revealTimeoutRef.current);
+        revealTimeoutRef.current = null;
+      }
       if (desktopPointer.matches === false) {
         setVisible(false);
         return;
@@ -49,29 +57,64 @@ export function useDesktopControlsTutorial(enabled: boolean) {
       const progress = readTutorialProgress();
       const isSuppressed = progress !== null && Date.now() < progress.suppressUntil;
       const isCompleted = progress?.version === TUTORIAL_VERSION;
-      setVisible(isSuppressed === false && isCompleted === false);
+      if (isSuppressed === true || isCompleted === true) {
+        setVisible(false);
+        return;
+      }
+
+      revealTimeoutRef.current = window.setTimeout(() => {
+        setFadingOut(false);
+        setVisible(true);
+        revealTimeoutRef.current = null;
+      }, 1000);
     };
 
     updateVisibility();
     desktopPointer.addEventListener("change", updateVisibility);
-    return () => desktopPointer.removeEventListener("change", updateVisibility);
+    return () => {
+      desktopPointer.removeEventListener("change", updateVisibility);
+      if (revealTimeoutRef.current !== null) window.clearTimeout(revealTimeoutRef.current);
+    };
   }, [enabled]);
 
-  const complete = useCallback(() => {
-    const completedAt = Date.now();
-    const progress: TutorialProgress = {
-      version: TUTORIAL_VERSION,
-      completedAt,
-      suppressUntil: completedAt + ONE_DAY_MS,
-    };
+  useEffect(
+    () => () => {
+      if (dismissTimeoutRef.current !== null) window.clearTimeout(dismissTimeoutRef.current);
+    },
+    [],
+  );
 
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
-    } catch {
-      // The tutorial should remain dismissible when storage is unavailable.
-    }
-    setVisible(false);
+  const complete = useCallback(() => {
+    if (dismissTimeoutRef.current !== null) return;
+    if (revealTimeoutRef.current !== null) window.clearTimeout(revealTimeoutRef.current);
+    setFadingOut(true);
+    dismissTimeoutRef.current = window.setTimeout(() => {
+      const completedAt = Date.now();
+      const progress: TutorialProgress = {
+        version: TUTORIAL_VERSION,
+        completedAt,
+        suppressUntil: completedAt + ONE_DAY_MS,
+      };
+
+      try {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+      } catch {
+        // The tutorial should remain dismissible when storage is unavailable.
+      }
+      setVisible(false);
+      setFadingOut(false);
+      dismissTimeoutRef.current = null;
+    }, 250);
   }, []);
 
-  return { visible, complete };
+  const show = useCallback(() => {
+    if (revealTimeoutRef.current !== null) window.clearTimeout(revealTimeoutRef.current);
+    if (dismissTimeoutRef.current !== null) window.clearTimeout(dismissTimeoutRef.current);
+    revealTimeoutRef.current = null;
+    dismissTimeoutRef.current = null;
+    setFadingOut(false);
+    setVisible(true);
+  }, []);
+
+  return { visible, fadingOut, complete, show };
 }

@@ -12,6 +12,7 @@ type Props = {
   onReady: (animations: number) => void;
   onError: (message: string) => void;
   onSkyboxReady: () => void;
+  onShowControlsTutorial: () => void;
 };
 
 export function TrackViewer(props: Props) {
@@ -33,6 +34,7 @@ export function TrackViewer(props: Props) {
             onResetCamera={viewer.resetCamera}
             onCopyInteractiveView={() => void viewer.createCameraSnapshot("interactive")}
             onCopyStaticView={() => void viewer.createCameraSnapshot("static")}
+            onShowControlsTutorial={props.onShowControlsTutorial}
           />
           <TouchViewerControls
             copiedCameraLink={viewer.copiedCameraLink}

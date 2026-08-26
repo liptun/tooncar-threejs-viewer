@@ -1,4 +1,4 @@
-import { Image, Maximize, RotateCcw, Video } from "lucide-react";
+import { CircleHelp, Image, Maximize, RotateCcw, Video } from "lucide-react";
 import { ExpandableIconButton } from "@/components/common/ExpandableIconButton";
 import { RtxIcon } from "@/components/common/RtxIcon";
 import type { CameraLinkType } from "@/hooks/useTrackViewer";
@@ -11,6 +11,7 @@ type Props = {
   onResetCamera: () => void;
   onCopyInteractiveView: () => void;
   onCopyStaticView: () => void;
+  onShowControlsTutorial: () => void;
 };
 
 export function ViewerControls({
@@ -20,6 +21,7 @@ export function ViewerControls({
   onResetCamera,
   onCopyInteractiveView,
   onCopyStaticView,
+  onShowControlsTutorial,
 }: Props) {
   return (
     <div
@@ -69,6 +71,13 @@ export function ViewerControls({
         className={cn(
           copiedCameraLink === "static" && "border-primary/60 bg-primary/25 text-primary",
         )}
+      />
+      <ExpandableIconButton
+        icon={<CircleHelp size={18} />}
+        label="Sterowanie"
+        onClick={onShowControlsTutorial}
+        aria-label="Pokaż sterowanie"
+        title="Pokaż sterowanie"
       />
       <ExpandableIconButton
         icon={<Maximize size={17} />}

@@ -69,6 +69,34 @@
   }
 }
 
+@keyframes tutorial-overlay-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes tutorial-overlay-fade-out {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+.tutorial-overlay-enter {
+  animation: tutorial-overlay-fade-in 300ms ease-out both;
+}
+
+.tutorial-overlay-exit {
+  animation: tutorial-overlay-fade-out 250ms ease-in both;
+}
+
 .snapshot-toast {
   animation: snapshot-toast-fade-out 1.8s ease-out forwards;
 }
