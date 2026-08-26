@@ -5,9 +5,11 @@ import { TouchJukebox } from "@/components/audio/TouchJukebox";
 import { TrackSidebar } from "@/components/sidebar/TrackSidebar";
 import { TrackLoadingOverlay } from "@/components/viewer/TrackLoadingOverlay";
 import { TrackViewer } from "@/components/viewer/TrackViewer";
+import { DesktopControlsTutorial } from "@/components/viewer/DesktopControlsTutorial";
 import { ViewerWatermark } from "@/components/viewer/ViewerWatermark";
 import { useTrackLoading } from "@/hooks/useTrackLoading";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
+import { useDesktopControlsTutorial } from "@/hooks/useDesktopControlsTutorial";
 import { tracks } from "@/tracks";
 
 type Props = {
@@ -21,6 +23,9 @@ export function TrackPage({ backgroundMode = false }: Props) {
   const track = tracks.find((item) => item.id === trackId);
   const loading = useTrackLoading(track?.id ?? tracks[0].id);
   const player = useAudioPlayer(track?.musicUrl ?? tracks[0].musicUrl);
+  const controlsTutorial = useDesktopControlsTutorial(
+    backgroundMode === false && loading.ready === true,
+  );
 
   if (track === undefined) return <Navigate to={`/track/${tracks[0].id}`} replace />;
 
@@ -55,6 +60,9 @@ export function TrackPage({ backgroundMode = false }: Props) {
             skyboxReady={loading.skyboxReady}
             error={loading.error}
           />
+        )}
+        {controlsTutorial.visible === true && (
+          <DesktopControlsTutorial onComplete={controlsTutorial.complete} />
         )}
       </section>
     </main>
